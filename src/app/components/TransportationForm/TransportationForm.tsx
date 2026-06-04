@@ -4,6 +4,7 @@ import axios from "axios";
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import styles from "./TransportationForm.module.css";
+import {sanitizeFileName} from "@/app/api/utils/sanitizeFileName";
 
 type FormValues = {
     orderDate: string;
@@ -145,9 +146,13 @@ export default function TransportationForm() {
 
             const url = URL.createObjectURL(blob);
 
+
+
             const link = document.createElement("a");
             link.href = url;
-            link.download = "zayavka.docx";
+            link.download = sanitizeFileName(
+                `Договір-заявка з перевізником ${values.carrierCompany} ${values.route} ${values.orderDate}.docx`
+            );
 
             document.body.appendChild(link);
             link.click();

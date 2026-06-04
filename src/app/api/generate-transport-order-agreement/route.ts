@@ -6,6 +6,7 @@ import Docxtemplater from "docxtemplater";
 import {formatOrderDate} from "@/app/api/utils/formatOrderDate";
 import {capitalizeText} from "@/app/api/utils/capitalizeText";
 import {formatBankDetails} from "@/app/api/utils/formatBankDetails";
+import {sanitizeFileName} from "@/app/api/utils/sanitizeFileName";
 
 type GenerateDocxBody = {
     orderDate: string;
@@ -87,7 +88,6 @@ export async function POST(req: NextRequest) {
         });
 
         const formattedOrderDate = formatOrderDate(orderDate);
-        console.log(formattedOrderDate);
         const formattedBankDetails = formatBankDetails(bankDetails);
 
         doc.render({
@@ -120,12 +120,17 @@ export async function POST(req: NextRequest) {
             compression: "DEFLATE",
         });
 
+
+        const fileName = sanitizeFileName(
+            `Договір-заявка з перевізником ${carrierCompany} ${route} ${orderDate}.docx`
+        );
+
         return new NextResponse(new Uint8Array(buffer), {
             status: 200,
             headers: {
                 "Content-Type":
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "Content-Disposition": 'attachment; filename="zayavka.docx"',
+                "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
             },
         });
     } catch (error) {
