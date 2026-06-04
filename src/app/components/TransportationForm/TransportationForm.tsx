@@ -1,17 +1,76 @@
 "use client";
 
 import axios from "axios";
-import { ErrorMessage, Field, Form, Formik, FormikHelpers } from "formik";
+import {
+    ErrorMessage,
+    Field,
+    FieldArray,
+    Form,
+    Formik,
+    FormikHelpers,
+} from "formik";
 import * as Yup from "yup";
 import styles from "./TransportationForm.module.css";
-import {sanitizeFileName} from "@/app/api/utils/sanitizeFileName";
+import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+
+type DocumentType =
+    | "transportOrderAgreement"
+    | "customerOrderAgreement"
+    | "act"
+    | "invoice";
+
+type VatMode = "withoutVat" | "withVat";
+
+const documentOptions: { value: DocumentType; label: string }[] = [
+    {
+        value: "transportOrderAgreement",
+        label: "Договір-заявка з перевізником",
+    },
+    {
+        value: "customerOrderAgreement",
+        label: "Договір-заявка із замовником",
+    },
+    {
+        value: "act",
+        label: "Акт виконаних робіт",
+    },
+    {
+        value: "invoice",
+        label: "Рахунок",
+    },
+];
+
+type ServiceItem = {
+    route: string;
+    vehicle: string;
+    quantity: string;
+    unit: string;
+    price: string;
+    amount: string;
+};
 
 type FormValues = {
+    selectedDocuments: DocumentType[];
+
     orderDate: string;
+    actDate: string;
     isInternational: boolean;
+    vatMode: VatMode;
+
+    customerCompany: string;
+    customerRepresentative: string;
+    customerBasisOfAuthority: string;
+    customerPaymentDetails: string;
+    customerBankDetails: string;
+    customerSignatureName: string;
+
     carrierCompany: string;
     carriersRepresentative: string;
     basisOfAuthority: string;
+    carrierPaymentDetails: string;
+    carrierBankDetails: string;
+    carrierSignatureName: string;
+
     loadingDateAndTime: string;
     loadingDetails: string;
     unloadingDetails: string;
@@ -21,20 +80,35 @@ type FormValues = {
     driverDetails: string;
     driversLicenseDetails: string;
     loadingUnloadingMethod: string;
-    paymentDetails: string;
     deliveryDeadline: string;
     otherDetails: string;
     cmrCount: string;
-    bankDetails: string;
-    carrierSignatureName: string,
+
+    services: ServiceItem[];
 };
 
 const initialValues: FormValues = {
+    selectedDocuments: ["transportOrderAgreement"],
+
     orderDate: "",
+    actDate: "",
     isInternational: false,
+    vatMode: "withoutVat",
+
+    customerCompany: "",
+    customerRepresentative: "",
+    customerBasisOfAuthority: "",
+    customerPaymentDetails: "",
+    customerBankDetails: "",
+    customerSignatureName: "",
+
     carrierCompany: "",
     carriersRepresentative: "",
     basisOfAuthority: "",
+    carrierPaymentDetails: "",
+    carrierBankDetails: "",
+    carrierSignatureName: "",
+
     loadingDateAndTime: "",
     loadingDetails: "",
     unloadingDetails: "",
@@ -44,18 +118,60 @@ const initialValues: FormValues = {
     driverDetails: "",
     driversLicenseDetails: "",
     loadingUnloadingMethod: "",
-    paymentDetails: "",
     deliveryDeadline: "",
     otherDetails: "",
     cmrCount: "",
-    bankDetails: "",
-    carrierSignatureName: "",
+
+    services: [
+        {
+            route: "",
+            vehicle: "",
+            quantity: "1",
+            unit: "послуга",
+            price: "",
+            amount: "",
+        },
+    ],
 };
 
 const validationSchema = Yup.object({
+    selectedDocuments: Yup.array()
+        .of(Yup.string().required())
+        .min(1, "Вибери хоча б один документ")
+        .required("Вибери документ"),
+
     orderDate: Yup.string().required("Вкажи дату заявки"),
+    actDate: Yup.string().required("Вкажи дату складання акта"),
 
     isInternational: Yup.boolean().required(),
+
+    vatMode: Yup.string()
+        .oneOf(["withoutVat", "withVat"])
+        .required("Вибери режим ПДВ"),
+
+    customerCompany: Yup.string()
+        .trim()
+        .required("Вкажи організацію замовника"),
+
+    customerRepresentative: Yup.string()
+        .trim()
+        .required("Вкажи керівника або представника замовника"),
+
+    customerBasisOfAuthority: Yup.string()
+        .trim()
+        .required("Вкажи на підставі чого діє замовник"),
+
+    customerPaymentDetails: Yup.string()
+        .trim()
+        .required("Вкажи умови оплати із замовником"),
+
+    customerBankDetails: Yup.string()
+        .trim()
+        .required("Вкажи реквізити замовника"),
+
+    customerSignatureName: Yup.string()
+        .trim()
+        .required("Вкажи ПІБ для підпису замовника"),
 
     carrierCompany: Yup.string()
         .trim()
@@ -63,11 +179,23 @@ const validationSchema = Yup.object({
 
     carriersRepresentative: Yup.string()
         .trim()
-        .required("Вкажи керівника або представника"),
+        .required("Вкажи керівника або представника перевізника"),
 
     basisOfAuthority: Yup.string()
         .trim()
-        .required("Вкажи на підставі чого діє організація"),
+        .required("Вкажи на підставі чого діє перевізник"),
+
+    carrierPaymentDetails: Yup.string()
+        .trim()
+        .required("Вкажи умови оплати перевізнику"),
+
+    carrierBankDetails: Yup.string()
+        .trim()
+        .required("Вкажи реквізити перевізника"),
+
+    carrierSignatureName: Yup.string()
+        .trim()
+        .required("Вкажи ПІБ для підпису перевізника"),
 
     loadingDateAndTime: Yup.string()
         .trim()
@@ -81,21 +209,13 @@ const validationSchema = Yup.object({
         .trim()
         .required("Вкажи дані розвантаження"),
 
-    route: Yup.string()
-        .trim()
-        .required("Вкажи маршрут"),
+    route: Yup.string().trim().required("Вкажи маршрут"),
 
-    cargoDetails: Yup.string()
-        .trim()
-        .required("Вкажи опис вантажу"),
+    cargoDetails: Yup.string().trim().required("Вкажи опис вантажу"),
 
-    vehicleDetails: Yup.string()
-        .trim()
-        .required("Вкажи дані автомобіля"),
+    vehicleDetails: Yup.string().trim().required("Вкажи дані автомобіля"),
 
-    driverDetails: Yup.string()
-        .trim()
-        .required("Вкажи дані водія"),
+    driverDetails: Yup.string().trim().required("Вкажи дані водія"),
 
     driversLicenseDetails: Yup.string()
         .trim()
@@ -105,28 +225,86 @@ const validationSchema = Yup.object({
         .trim()
         .required("Вкажи спосіб завантаження/розвантаження"),
 
-    paymentDetails: Yup.string()
-        .trim()
-        .required("Вкажи умови оплати"),
-
     deliveryDeadline: Yup.string()
         .trim()
         .required("Вкажи термін виконання перевезення"),
 
+    cmrCount: Yup.string().trim().required("Вкажи кількість CMR"),
+
     otherDetails: Yup.string().trim(),
 
-    cmrCount: Yup.string()
-        .trim()
-        .required("Вкажи кількість CMR"),
-
-    bankDetails: Yup.string()
-        .trim()
-        .required("Вкажи реквізити"),
-
-    carrierSignatureName: Yup.string()
-        .trim()
-        .required("Вкажи ПІБ для підпису"),
+    services: Yup.array()
+        .of(
+            Yup.object({
+                route: Yup.string().trim().required("Вкажи маршрут послуги"),
+                vehicle: Yup.string().trim().required("Вкажи транспорт"),
+                quantity: Yup.string().trim().required("Вкажи кількість"),
+                unit: Yup.string().trim().required("Вкажи одиницю виміру"),
+                price: Yup.string().trim().required("Вкажи ціну"),
+                amount: Yup.string().trim().required("Вкажи суму"),
+            })
+        )
+        .min(1, "Додай хоча б одну послугу")
+        .required("Додай хоча б одну послугу"),
 });
+
+type TextInputProps = {
+    name: keyof FormValues;
+    label: string;
+    placeholder?: string;
+    type?: string;
+};
+
+function TextInput({
+                       name,
+                       label,
+                       placeholder,
+                       type = "text",
+                   }: TextInputProps) {
+    return (
+        <div className={styles.group}>
+            <label className={styles.label} htmlFor={name}>
+                {label}
+            </label>
+
+            <Field
+                className={styles.input}
+                id={name}
+                name={name}
+                type={type}
+                placeholder={placeholder}
+            />
+
+            <ErrorMessage className={styles.error} name={name} component="p" />
+        </div>
+    );
+}
+
+type TextAreaProps = {
+    name: keyof FormValues;
+    label: string;
+    placeholder?: string;
+};
+
+function TextArea({ name, label, placeholder }: TextAreaProps) {
+    return (
+        <div className={styles.groupFull}>
+            <label className={styles.label} htmlFor={name}>
+                {label}
+            </label>
+
+            <Field
+                className={styles.textarea}
+                id={name}
+                name={name}
+                as="textarea"
+                placeholder={placeholder}
+            />
+
+            <ErrorMessage className={styles.error} name={name} component="p" />
+        </div>
+    );
+}
 
 export default function TransportationForm() {
     async function handleSubmit(
@@ -136,22 +314,39 @@ export default function TransportationForm() {
         try {
             setStatus("");
 
-            const response = await axios.post<Blob>("/api/generate-transport-order-agreement", values, {
-                responseType: "blob",
-            });
+            const { selectedDocuments, ...documentData } = values;
+
+            const response = await axios.post<Blob>(
+                "/api/generate-selected-documents",
+                {
+                    selectedDocuments,
+                    data: documentData,
+                },
+                {
+                    responseType: "blob",
+                }
+            );
+
+            const isZip = selectedDocuments.length > 1;
 
             const blob = new Blob([response.data], {
-                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                type: isZip
+                    ? "application/zip"
+                    : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             });
 
             const url = URL.createObjectURL(blob);
 
-
+            const selectedDocumentLabel =
+                documentOptions.find((item) => item.value === selectedDocuments[0])
+                    ?.label || "Документ";
 
             const link = document.createElement("a");
             link.href = url;
             link.download = sanitizeFileName(
-                `Договір-заявка з перевізником ${values.carrierCompany} ${values.route} ${values.orderDate}.docx`
+                isZip
+                    ? `Документи ${values.route} ${values.orderDate}.zip`
+                    : `${selectedDocumentLabel} ${values.route} ${values.orderDate}.docx`
             );
 
             document.body.appendChild(link);
@@ -160,10 +355,14 @@ export default function TransportationForm() {
 
             URL.revokeObjectURL(url);
 
-            setStatus("Заявку успішно згенеровано");
+            setStatus(
+                isZip
+                    ? "Документи успішно згенеровано"
+                    : "Документ успішно згенеровано"
+            );
         } catch (error) {
             console.error(error);
-            setStatus("Помилка генерації заявки");
+            setStatus("Помилка генерації документів");
         } finally {
             setSubmitting(false);
         }
@@ -173,9 +372,10 @@ export default function TransportationForm() {
         <section className={styles.section}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Заявка на перевезення</h1>
+                    <h1 className={styles.title}>Документація</h1>
                     <p className={styles.subtitle}>
-                        Заповни дані, після чого система сформує готовий Word-документ.
+                        Заповни дані, вибери потрібні документи, після чого система
+                        сформує готовий Word-файл або ZIP-архів.
                     </p>
                 </div>
 
@@ -184,31 +384,48 @@ export default function TransportationForm() {
                     validationSchema={validationSchema}
                     onSubmit={handleSubmit}
                 >
-                    {({ isSubmitting, status }) => (
+                    {({ isSubmitting, status, values, setFieldValue }) => (
                         <Form className={styles.form}>
-                            <div className={styles.grid}>
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="orderDate">
-                                        Дата заявки
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="orderDate"
-                                        name="orderDate"
-                                        type="text"
-                                        placeholder="12.06.2026-1"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="orderDate"
-                                        component="p"
-                                    />
+                            <div className={styles.groupFull}>
+                                <p className={styles.label}>Які документи сформувати</p>
+
+                                <div className={styles.checkboxList}>
+                                    {documentOptions.map((item) => (
+                                        <label className={styles.checkboxGroup} key={item.value}>
+                                            <Field
+                                                className={styles.checkbox}
+                                                type="checkbox"
+                                                name="selectedDocuments"
+                                                value={item.value}
+                                            />
+                                            <span>{item.label}</span>
+                                        </label>
+                                    ))}
                                 </div>
 
+                                <ErrorMessage
+                                    className={styles.error}
+                                    name="selectedDocuments"
+                                    component="p"
+                                />
+                            </div>
+
+                            <div className={styles.grid}>
+                                <TextInput
+                                    name="orderDate"
+                                    label="Дата складання заявки"
+                                    placeholder="12.06.2026-1"
+                                />
+
+                                <TextInput
+                                    name="actDate"
+                                    label="Дата складання акта"
+                                    placeholder="12.06.2026-1"
+                                />
+
                                 <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="orderDate">
-                                        Тип перевезення
-                                    </label>
+                                    <label className={styles.label}>Тип перевезення</label>
+
                                     <label className={styles.checkboxGroup}>
                                         <Field
                                             className={styles.checkbox}
@@ -217,6 +434,7 @@ export default function TransportationForm() {
                                         />
                                         <span>Міжнародне перевезення</span>
                                     </label>
+
                                     <ErrorMessage
                                         className={styles.error}
                                         name="isInternational"
@@ -224,340 +442,399 @@ export default function TransportationForm() {
                                     />
                                 </div>
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="carrierCompany">
-                                        Організація перевізника
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="carrierCompany"
-                                        name="carrierCompany"
-                                        type="text"
-                                        placeholder="Наприклад, ТОВ..."
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="carrierCompany"
-                                        component="p"
-                                    />
+                                <div className={styles.groupFull}>
+                                    <h2 className={styles.blockTitle}>Дані замовника</h2>
                                 </div>
 
-                                <div className={styles.group}>
-                                    <label
-                                        className={styles.label}
-                                        htmlFor="carriersRepresentative"
-                                    >
-                                        Керівник / представник
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="carriersRepresentative"
-                                        name="carriersRepresentative"
-                                        type="text"
-                                        placeholder="ПІБ представника"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="carriersRepresentative"
-                                        component="p"
-                                    />
+                                <TextInput
+                                    name="customerCompany"
+                                    label="Організація замовника"
+                                    placeholder="Наприклад, ТОВ..."
+                                />
+
+                                <TextInput
+                                    name="customerRepresentative"
+                                    label="Керівник / представник замовника"
+                                    placeholder="ПІБ представника"
+                                />
+
+                                <TextInput
+                                    name="customerBasisOfAuthority"
+                                    label="На підставі чого діє замовник"
+                                    placeholder="Статуту, довіреності тощо"
+                                />
+
+                                <TextInput
+                                    name="customerSignatureName"
+                                    label="ПІБ для підпису замовника"
+                                    placeholder="Наприклад, І.Г. Дорош"
+                                />
+
+                                <TextArea
+                                    name="customerPaymentDetails"
+                                    label="Умови оплати із замовником"
+                                    placeholder="Сума, форма оплати, термін оплати"
+                                />
+
+                                <TextArea
+                                    name="customerBankDetails"
+                                    label="Реквізити замовника"
+                                    placeholder="IBAN, ЄДРПОУ/РНОКПП, банк, отримувач"
+                                />
+
+                                <div className={styles.groupFull}>
+                                    <h2 className={styles.blockTitle}>Дані перевізника</h2>
                                 </div>
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="basisOfAuthority">
-                                        На підставі чого діє
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="basisOfAuthority"
-                                        name="basisOfAuthority"
-                                        type="text"
-                                        placeholder="Статуту, довіреності тощо"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="basisOfAuthority"
-                                        component="p"
-                                    />
+                                <TextInput
+                                    name="carrierCompany"
+                                    label="Організація перевізника"
+                                    placeholder="Наприклад, ФОП..."
+                                />
+
+                                <TextInput
+                                    name="carriersRepresentative"
+                                    label="Керівник / представник перевізника"
+                                    placeholder="ПІБ представника"
+                                />
+
+                                <TextInput
+                                    name="basisOfAuthority"
+                                    label="На підставі чого діє перевізник"
+                                    placeholder="Статуту, довіреності тощо"
+                                />
+
+                                <TextInput
+                                    name="carrierSignatureName"
+                                    label="ПІБ для підпису перевізника"
+                                    placeholder="Наприклад, В.В. Ковернега"
+                                />
+
+                                <TextArea
+                                    name="carrierPaymentDetails"
+                                    label="Умови оплати перевізнику"
+                                    placeholder="Сума, форма оплати, термін оплати"
+                                />
+
+                                <TextArea
+                                    name="carrierBankDetails"
+                                    label="Реквізити перевізника"
+                                    placeholder="IBAN, ЄДРПОУ/РНОКПП, банк, отримувач"
+                                />
+
+                                <div className={styles.groupFull}>
+                                    <h2 className={styles.blockTitle}>Дані перевезення</h2>
                                 </div>
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="loadingDateAndTime">
-                                        Дата та час завантаження
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="loadingDateAndTime"
-                                        name="loadingDateAndTime"
-                                        type="text"
-                                        placeholder="04.06.2026р., 14:00"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="loadingDateAndTime"
-                                        component="p"
-                                    />
+                                <TextInput
+                                    name="loadingDateAndTime"
+                                    label="Дата та час завантаження"
+                                    placeholder="04.06.2026р., 14:00"
+                                />
+
+                                <TextInput
+                                    name="route"
+                                    label="Маршрут"
+                                    placeholder="Львів — Київ"
+                                />
+
+                                <TextArea
+                                    name="loadingDetails"
+                                    label="Завантаження"
+                                    placeholder="Адреса завантаження, контактна особа, телефон"
+                                />
+
+                                <TextArea
+                                    name="unloadingDetails"
+                                    label="Розвантаження"
+                                    placeholder="Адреса розвантаження, контактна особа, телефон"
+                                />
+
+                                <TextArea
+                                    name="cargoDetails"
+                                    label="Опис вантажу"
+                                    placeholder="Назва вантажу, вага/обʼєм, тип пакування"
+                                />
+
+                                <TextArea
+                                    name="vehicleDetails"
+                                    label="Дані автомобіля"
+                                    placeholder="Марка, модель, номер авто, причіп"
+                                />
+
+                                <TextArea
+                                    name="driverDetails"
+                                    label="Дані водія"
+                                    placeholder="ПІБ водія, телефон, паспортні дані за потреби"
+                                />
+
+                                <TextArea
+                                    name="driversLicenseDetails"
+                                    label="Посвідчення водія"
+                                    placeholder="Серія, номер, дата видачі"
+                                />
+
+                                <TextInput
+                                    name="loadingUnloadingMethod"
+                                    label="Спосіб завантаження/розвантаження"
+                                    placeholder="Бічне, заднє, верхнє тощо"
+                                />
+
+                                <TextInput
+                                    name="deliveryDeadline"
+                                    label="Термін виконання перевезення"
+                                    placeholder="До 05.06.2026, 03:30"
+                                />
+
+                                <TextInput
+                                    name="cmrCount"
+                                    label="Кількість CMR"
+                                    placeholder="Наприклад, 4"
+                                />
+
+                                <TextArea
+                                    name="otherDetails"
+                                    label="Інші умови"
+                                    placeholder="Додаткові умови, примітки, вимоги"
+                                />
+
+                                <div className={styles.groupFull}>
+                                    <h2 className={styles.blockTitle}>
+                                        Послуги для акта / рахунку
+                                    </h2>
                                 </div>
 
                                 <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="loadingDetails">
-                                        Завантаження
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="loadingDetails"
-                                        name="loadingDetails"
-                                        as="textarea"
-                                        placeholder="Адреса завантаження, контактна особа, телефон"
-                                    />
+                                    <p className={styles.label}>ПДВ для акта / рахунку</p>
+
+                                    <div className={styles.checkboxList}>
+                                        <label className={styles.checkboxGroup}>
+                                            <Field
+                                                className={styles.checkbox}
+                                                type="radio"
+                                                name="vatMode"
+                                                value="withoutVat"
+                                            />
+                                            <span>Без ПДВ</span>
+                                        </label>
+
+                                        <label className={styles.checkboxGroup}>
+                                            <Field
+                                                className={styles.checkbox}
+                                                type="radio"
+                                                name="vatMode"
+                                                value="withVat"
+                                            />
+                                            <span>З ПДВ</span>
+                                        </label>
+                                    </div>
+
                                     <ErrorMessage
                                         className={styles.error}
-                                        name="loadingDetails"
+                                        name="vatMode"
                                         component="p"
                                     />
                                 </div>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="unloadingDetails">
-                                        Розвантаження
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="unloadingDetails"
-                                        name="unloadingDetails"
-                                        as="textarea"
-                                        placeholder="Адреса розвантаження, контактна особа, телефон"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="unloadingDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                <FieldArray name="services">
+                                    {({ push, remove }) => (
+                                        <div className={styles.groupFull}>
+                                            {values.services.map((_, index) => (
+                                                <div className={styles.serviceCard} key={index}>
+                                                    <div className={styles.serviceHeader}>
+                                                        <h3 className={styles.serviceTitle}>
+                                                            Позиція {index + 1}
+                                                        </h3>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="route">
-                                        Маршрут
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="route"
-                                        name="route"
-                                        type="text"
-                                        placeholder="Львів — Київ"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="route"
-                                        component="p"
-                                    />
-                                </div>
+                                                        <div className={styles.serviceActions}>
+                                                            <button
+                                                                type="button"
+                                                                className={styles.secondaryButton}
+                                                                onClick={() => {
+                                                                    setFieldValue(
+                                                                        `services.${index}.route`,
+                                                                        values.route
+                                                                    );
+                                                                    setFieldValue(
+                                                                        `services.${index}.vehicle`,
+                                                                        values.vehicleDetails
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Підтягнути маршрут і транспорт
+                                                            </button>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="cargoDetails">
-                                        Опис вантажу
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="cargoDetails"
-                                        name="cargoDetails"
-                                        as="textarea"
-                                        placeholder="Назва вантажу, вага/обʼєм, тип пакування"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="cargoDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            {values.services.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    className={styles.removeButton}
+                                                                    onClick={() => remove(index)}
+                                                                >
+                                                                    Видалити
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="vehicleDetails">
-                                        Дані автомобіля
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="vehicleDetails"
-                                        name="vehicleDetails"
-                                        as="textarea"
-                                        placeholder="Марка, модель, номер авто, причіп"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="vehicleDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                    <div className={styles.grid}>
+                                                        <div className={styles.groupFull}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.route`}
+                                                            >
+                                                                Маршрут послуги
+                                                            </label>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="driverDetails">
-                                        Дані водія
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="driverDetails"
-                                        name="driverDetails"
-                                        as="textarea"
-                                        placeholder="ПІБ водія, телефон, паспортні дані за потреби"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="driverDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.route`}
+                                                                name={`services.${index}.route`}
+                                                                type="text"
+                                                                placeholder="Польща, с. Ясениця - ПП Грушів"
+                                                            />
 
-                                <div className={styles.groupFull}>
-                                    <label
-                                        className={styles.label}
-                                        htmlFor="driversLicenseDetails"
-                                    >
-                                        Посвідчення водія
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="driversLicenseDetails"
-                                        name="driversLicenseDetails"
-                                        as="textarea"
-                                        placeholder="Серія, номер, дата видачі"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="driversLicenseDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.route`}
+                                                                component="p"
+                                                            />
+                                                        </div>
 
-                                <div className={styles.group}>
-                                    <label
-                                        className={styles.label}
-                                        htmlFor="loadingUnloadingMethod"
-                                    >
-                                        Спосіб завантаження/розвантаження
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="loadingUnloadingMethod"
-                                        name="loadingUnloadingMethod"
-                                        type="text"
-                                        placeholder="Бічне, заднє, верхнє тощо"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="loadingUnloadingMethod"
-                                        component="p"
-                                    />
-                                </div>
+                                                        <div className={styles.groupFull}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.vehicle`}
+                                                            >
+                                                                Транспорт
+                                                            </label>
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="deliveryDeadline">
-                                        Термін виконання перевезення
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="deliveryDeadline"
-                                        name="deliveryDeadline"
-                                        type="text"
-                                        placeholder="До 05.06.2026, 03:30"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="deliveryDeadline"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.vehicle`}
+                                                                name={`services.${index}.vehicle`}
+                                                                type="text"
+                                                                placeholder="FIAT DUCATO №А/М ВС 3488 НК"
+                                                            />
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="paymentDetails">
-                                        Умови оплати
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="paymentDetails"
-                                        name="paymentDetails"
-                                        as="textarea"
-                                        placeholder="Сума, форма оплати, термін оплати"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="paymentDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.vehicle`}
+                                                                component="p"
+                                                            />
+                                                        </div>
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="cmrCount">
-                                        Кількість CMR
-                                    </label>
-                                    <Field
-                                        className={styles.input}
-                                        id="cmrCount"
-                                        name="cmrCount"
-                                        type="text"
-                                        placeholder="Наприклад, 4"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="cmrCount"
-                                        component="p"
-                                    />
-                                </div>
+                                                        <div className={styles.group}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.quantity`}
+                                                            >
+                                                                Кількість
+                                                            </label>
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="bankDetails">
-                                        Реквізити
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="bankDetails"
-                                        name="bankDetails"
-                                        as="textarea"
-                                        placeholder="IBAN, ЄДРПОУ/РНОКПП, банк, отримувач"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="bankDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.quantity`}
+                                                                name={`services.${index}.quantity`}
+                                                                type="text"
+                                                            />
 
-                                <div className={styles.group}>
-                                    <label className={styles.label} htmlFor="carrierSignatureName">
-                                        ПІБ для підпису
-                                    </label>
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.quantity`}
+                                                                component="p"
+                                                            />
+                                                        </div>
 
-                                    <Field
-                                        className={styles.input}
-                                        id="carrierSignatureName"
-                                        name="carrierSignatureName"
-                                        type="text"
-                                        placeholder="Наприклад, В.В. Ковернега"
-                                    />
+                                                        <div className={styles.group}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.unit`}
+                                                            >
+                                                                Одиниця виміру
+                                                            </label>
 
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="carrierSignatureName"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.unit`}
+                                                                name={`services.${index}.unit`}
+                                                                type="text"
+                                                            />
 
-                                <div className={styles.groupFull}>
-                                    <label className={styles.label} htmlFor="otherDetails">
-                                        Інші умови
-                                    </label>
-                                    <Field
-                                        className={styles.textarea}
-                                        id="otherDetails"
-                                        name="otherDetails"
-                                        as="textarea"
-                                        placeholder="Додаткові умови, примітки, вимоги"
-                                    />
-                                    <ErrorMessage
-                                        className={styles.error}
-                                        name="otherDetails"
-                                        component="p"
-                                    />
-                                </div>
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.unit`}
+                                                                component="p"
+                                                            />
+                                                        </div>
+
+                                                        <div className={styles.group}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.price`}
+                                                            >
+                                                                Ціна
+                                                            </label>
+
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.price`}
+                                                                name={`services.${index}.price`}
+                                                                type="text"
+                                                                placeholder="15423.00"
+                                                            />
+
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.price`}
+                                                                component="p"
+                                                            />
+                                                        </div>
+
+                                                        <div className={styles.group}>
+                                                            <label
+                                                                className={styles.label}
+                                                                htmlFor={`services.${index}.amount`}
+                                                            >
+                                                                Сума
+                                                            </label>
+
+                                                            <Field
+                                                                className={styles.input}
+                                                                id={`services.${index}.amount`}
+                                                                name={`services.${index}.amount`}
+                                                                type="text"
+                                                                placeholder="15423.00"
+                                                            />
+
+                                                            <ErrorMessage
+                                                                className={styles.error}
+                                                                name={`services.${index}.amount`}
+                                                                component="p"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                type="button"
+                                                className={styles.secondaryButton}
+                                                onClick={() =>
+                                                    push({
+                                                        route: values.route,
+                                                        vehicle: values.vehicleDetails,
+                                                        quantity: "1",
+                                                        unit: "послуга",
+                                                        price: "",
+                                                        amount: "",
+                                                    })
+                                                }
+                                            >
+                                                Додати позицію
+                                            </button>
+                                        </div>
+                                    )}
+                                </FieldArray>
                             </div>
 
                             <div className={styles.actions}>
@@ -566,7 +843,7 @@ export default function TransportationForm() {
                                     type="submit"
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? "Генерація..." : "Згенерувати заявку"}
+                                    {isSubmitting ? "Генерація..." : "Згенерувати документи"}
                                 </button>
 
                                 {status && <p className={styles.status}>{status}</p>}
