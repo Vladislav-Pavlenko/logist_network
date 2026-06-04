@@ -260,6 +260,8 @@ function generateDocxFromTemplate(
         data.isInternational
     );
 
+    const serviceItemsCount = preparedServices.length;
+
     const totalAmount = calculateTotalAmount(preparedServices);
 
     const priceColumnTitle =
@@ -301,6 +303,7 @@ function generateDocxFromTemplate(
         customerBankDetailsText: formattedCustomerBankDetails.bankDetailsText,
 
         services: preparedServices,
+        serviceItemsCount,
 
         priceColumnTitle,
         amountColumnTitle,
