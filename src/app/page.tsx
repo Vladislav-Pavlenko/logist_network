@@ -1,4 +1,4 @@
-import TransportationForm from "@/app/components/TransportationForm/TransportationForm";
+import TransportationForm from "@/app/components/TransportationDocuments/TransportationForm";
 
 export default function Home() {
   return <main>

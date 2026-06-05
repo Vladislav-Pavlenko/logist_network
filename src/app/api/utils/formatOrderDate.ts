@@ -16,21 +16,34 @@ export function formatOrderDate(value: string): string {
 
     const cleanValue = value.trim();
 
-    const match = cleanValue.match(
+    const ukrainianMatch = cleanValue.match(
         /^(\d{2})\.(\d{2})\.(\d{2}|\d{4})(?:-(\d+))?$/
     );
 
-    if (!match) {
-        return cleanValue;
+    if (ukrainianMatch) {
+        const [, day, month, yearValue, orderNumber] = ukrainianMatch;
+
+        const fullYear = yearValue.length === 2 ? `20${yearValue}` : yearValue;
+        const shortYear = fullYear.slice(-2);
+        const monthName = months[month] || month;
+        const orderSuffix = orderNumber ? `-${orderNumber}` : "";
+
+        return `№${day}/${month}/${shortYear}${orderSuffix} від «${day}» ${monthName} ${fullYear} р.`;
     }
 
-    const [, day, month, yearValue, orderNumber] = match;
+    const isoMatch = cleanValue.match(
+        /^(\d{4})-(\d{2})-(\d{2})(?:-(\d+))?$/
+    );
 
-    const fullYear = yearValue.length === 2 ? `20${yearValue}` : yearValue;
-    const shortYear = fullYear.slice(-2);
-    const monthName = months[month] || month;
+    if (isoMatch) {
+        const [, year, month, day, orderNumber] = isoMatch;
 
-    const orderSuffix = orderNumber ? `-${orderNumber}` : "";
+        const shortYear = year.slice(-2);
+        const monthName = months[month] || month;
+        const orderSuffix = orderNumber ? `-${orderNumber}` : "";
 
-    return `№${shortYear}/${month}/${day}${orderSuffix} від «${day}» ${monthName} ${fullYear} р.`;
+        return `№${day}/${month}/${shortYear}${orderSuffix} від «${day}» ${monthName} ${year} р.`;
+    }
+
+    return cleanValue;
 }

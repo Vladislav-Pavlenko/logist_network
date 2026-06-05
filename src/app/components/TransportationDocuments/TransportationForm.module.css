@@ -1,0 +1,345 @@
+.section {
+    padding: 40px 100px;
+    background: #f3f4f6;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.header {
+    margin-bottom: 28px;
+}
+
+.title {
+    margin: 0 0 8px;
+    font-size: 34px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: #111827;
+}
+
+.subtitle {
+    margin: 0;
+    max-width: 720px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #6b7280;
+}
+
+/* Меню вибору документа */
+
+.documentMenu {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.documentButton {
+    min-height: 68px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 16px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.documentButton:hover {
+    background: #f9fafb;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.1);
+}
+
+/* Форма */
+
+.form {
+    padding: 28px;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.group,
+.groupFull {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.groupFull {
+    grid-column: 1 / -1;
+}
+
+.label {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.35;
+    font-weight: 700;
+    color: #374151;
+}
+
+.input,
+.textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 15px;
+    line-height: 1.45;
+    outline: none;
+    transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background 0.2s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+    color: #9ca3af;
+}
+
+.input:focus,
+.textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+.textarea {
+    min-height: 108px;
+    resize: vertical;
+}
+
+.error {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #dc2626;
+}
+
+.status {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #16a34a;
+}
+
+/* Заголовки секцій */
+
+.blockTitle {
+    margin: 14px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 800;
+    color: #111827;
+}
+
+/* Checkbox / radio */
+
+.checkboxList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.checkboxGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+}
+
+/* Послуги */
+
+.serviceCard {
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #f9fafb;
+}
+
+.serviceCard + .serviceCard {
+    margin-top: 16px;
+}
+
+.serviceHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.serviceTitle {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 800;
+    color: #111827;
+}
+
+.serviceActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Кнопки */
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.button,
+.secondaryButton,
+.removeButton {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            background 0.2s ease,
+            transform 0.2s ease,
+            opacity 0.2s ease;
+}
+
+.button {
+    color: #ffffff;
+    background: #2563eb;
+}
+
+.button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+}
+
+.secondaryButton {
+    color: #ffffff;
+    background: #16a34a;
+}
+
+.secondaryButton:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+}
+
+.removeButton {
+    color: #ffffff;
+    background: #dc2626;
+}
+
+.removeButton:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+/* Адаптив */
+
+@media (max-width: 1024px) {
+    .section {
+        padding: 32px 40px;
+    }
+
+    .documentMenu {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 24px 16px;
+    }
+
+    .title {
+        font-size: 28px;
+    }
+
+    .form {
+        padding: 20px;
+        border-radius: 18px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .documentMenu {
+        grid-template-columns: 1fr;
+    }
+
+    .checkboxList {
+        grid-template-columns: 1fr;
+    }
+
+    .serviceHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .serviceActions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .button,
+    .secondaryButton,
+    .removeButton {
+        width: 100%;
+    }
+}
