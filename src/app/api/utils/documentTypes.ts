@@ -3,9 +3,19 @@ export type DocumentType =
     | "customerOrderAgreement"
     | "act"
     | "invoice"
-    | "forwarderReport";
+    | "forwarderReport"
+    | "customerForwardingAgreement"
+    | "carrierForwardingAgreement"
+    | "transportCostsCertificate";
 
 export type VatMode = "withoutVat" | "withVat";
+
+export type TransportCostSegment = {
+    from: string;
+    to: string;
+    distanceKm: string;
+    amount: string;
+};
 
 export type ServiceItem = {
     route: string;
@@ -37,6 +47,7 @@ export type DocumentData = {
     customerCompany: string;
     customerRepresentative: string;
     customerRepresentativeGenitive: string;
+    customerRepresentativePosition: string;
     customerBasisOfAuthority: string;
     customerPaymentDetails: string;
     customerBankDetails: string;
@@ -45,6 +56,7 @@ export type DocumentData = {
     carrierCompany: string;
     carriersRepresentative: string;
     carrierRepresentativeGenitive: string;
+    carrierRepresentativePosition: string;
     basisOfAuthority: string;
     carrierPaymentDetails: string;
     carrierBankDetails: string;
@@ -73,6 +85,23 @@ export type DocumentData = {
     customerServiceAmount: string;
     carrierServiceAmount: string;
     forwarderRewardAmount: string;
+
+    forwardingAgreementNumber: string;
+    forwardingAgreementDate: string;
+    forwardingAgreementCity: string;
+    forwardingAgreementValidUntil: string;
+
+    transportCostsCertificateDate: string;
+    transportCostsCertificateNumber: string;
+    transportCostsCertificateRecipient: string;
+
+    transportCostsCustomerCompany: string;
+    transportCostsVehicle: string;
+
+    transportCostSegments: TransportCostSegment[];
+
+    cargoInsured: boolean;
+    loadingWorksIncluded: boolean;
 
     carrierActDetails: string;
 

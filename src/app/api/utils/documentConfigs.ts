@@ -35,4 +35,24 @@ export const documentConfigs: Record<DocumentType, DocumentConfig> = {
         outputName: (data) =>
             `Звіт експедитора ${data.customerCompany} ${data.route} ${data.forwarderReportDate}.docx`,
     },
+
+    customerForwardingAgreement: {
+        templateName: "CustomerForwardingAgreement.docx",
+        outputName: (data) =>
+            `Договір транспортної експедиції ${data.customerCompany} ${data.forwardingAgreementNumber}.docx`,
+    },
+
+    carrierForwardingAgreement: {
+        templateName: "CarrierForwardingAgreement.docx",
+
+        outputName: (data) =>
+            `Договір транспортної експедиції з перевізником ${data.carrierCompany} ${data.forwardingAgreementNumber}.docx`,
+    },
+
+    transportCostsCertificate: {
+        templateName: "TransportCostsCertificate.docx",
+
+        outputName: (data) =>
+            `Довідка про транспортні витрати ${data.transportCostsCustomerCompany} ${data.transportCostsCertificateDate}.docx`,
+    },
 };

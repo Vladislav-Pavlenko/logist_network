@@ -16,6 +16,22 @@ export function formatMoney(value: string): string {
     });
 }
 
+export function numberToWords(value: string): string {
+    const numberValue = Number(
+        String(value)
+            .replace(/\s/g, "")
+            .replace(",", ".")
+    );
+
+    if (Number.isNaN(numberValue)) {
+        return value;
+    }
+
+    return numberToUkrainianWords(
+        Math.floor(numberValue)
+    );
+}
+
 export function moneyToWords(value: string): string {
     const numberValue = parseMoney(value);
 
@@ -36,7 +52,7 @@ export function moneyToWords(value: string): string {
     )} ${hryvniaLabel} ${kopiykyText} копійок`;
 }
 
-function numberToUkrainianWords(num: number): string {
+export function numberToUkrainianWords(num: number): string {
     if (num === 0) return "нуль";
 
     const onesFeminine = [

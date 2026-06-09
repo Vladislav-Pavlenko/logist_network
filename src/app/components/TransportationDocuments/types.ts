@@ -3,9 +3,19 @@ export type DocumentType =
     | "customerOrderAgreement"
     | "act"
     | "invoice"
-    |"forwarderReport";
+    | "forwarderReport"
+    | "customerForwardingAgreement"
+    | "carrierForwardingAgreement"
+    | "transportCostsCertificate";
 
 export type VatMode = "withoutVat" | "withVat";
+
+export type TransportCostSegment = {
+    from: string;
+    to: string;
+    distanceKm: string;
+    amount: string;
+};
 
 export type ServiceItem = {
     route: string;
@@ -28,14 +38,16 @@ export type DocumentData = {
     customerCompany: string;
     customerRepresentative: string;
     customerRepresentativeGenitive: string;
+    customerRepresentativePosition: string;
     customerBasisOfAuthority: string;
     customerPaymentDetails: string;
     customerBankDetails: string;
     customerSignatureName: string;
 
     carrierCompany: string;
-    carrierRepresentativeGenitive: string;
     carriersRepresentative: string;
+    carrierRepresentativeGenitive: string;
+    carrierRepresentativePosition: string;
     basisOfAuthority: string;
     carrierPaymentDetails: string;
     carrierBankDetails: string;
@@ -54,22 +66,34 @@ export type DocumentData = {
     otherDetails: string;
     cmrCount: string;
 
+    services: ServiceItem[];
+
     forwarderReportDate: string;
     forwarderReportCity: string;
-
     forwardingAgreementDetails: string;
-
     actualCarrierCompany: string;
-
     customerServiceAmount: string;
     carrierServiceAmount: string;
     forwarderRewardAmount: string;
-
     carrierActDetails: string;
-
     attachmentsCount: string;
 
-    services: ServiceItem[];
+    transportCostsCertificateDate: string;
+    transportCostsCertificateNumber: string;
+    transportCostsCertificateRecipient: string;
+
+    transportCostsCustomerCompany: string;
+    transportCostsVehicle: string;
+
+    transportCostSegments: TransportCostSegment[];
+
+    cargoInsured: boolean;
+    loadingWorksIncluded: boolean;
+
+    forwardingAgreementNumber: string;
+    forwardingAgreementDate: string;
+    forwardingAgreementCity: string;
+    forwardingAgreementValidUntil: string;
 };
 
 export type FormValues = DocumentData & {

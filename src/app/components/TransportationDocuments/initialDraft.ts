@@ -12,14 +12,15 @@ export const initialDraft: DocumentData = {
     customerCompany: "",
     customerRepresentative: "",
     customerRepresentativeGenitive: "",
+    customerRepresentativePosition: "",
     customerBasisOfAuthority: "",
     customerPaymentDetails: "",
     customerBankDetails: "",
     customerSignatureName: "",
 
     carrierCompany: "",
-    carrierRepresentativeGenitive: "",
     carriersRepresentative: "",
+    carrierRepresentativeGenitive: "",
     basisOfAuthority: "",
     carrierPaymentDetails: "",
     carrierBankDetails: "",
@@ -38,21 +39,6 @@ export const initialDraft: DocumentData = {
     otherDetails: "",
     cmrCount: "",
 
-    forwarderReportDate: "",
-    forwarderReportCity: "",
-
-    forwardingAgreementDetails: "",
-
-    actualCarrierCompany: "",
-
-    customerServiceAmount: "",
-    carrierServiceAmount: "",
-    forwarderRewardAmount: "",
-
-    carrierActDetails: "",
-
-    attachmentsCount: "",
-
     services: [
         {
             route: "",
@@ -63,4 +49,39 @@ export const initialDraft: DocumentData = {
             amount: "",
         },
     ],
+
+    forwarderReportDate: "",
+    forwarderReportCity: "",
+    forwardingAgreementDetails: "",
+    actualCarrierCompany: "",
+    customerServiceAmount: "",
+    carrierServiceAmount: "",
+    carrierRepresentativePosition: "",
+    forwarderRewardAmount: "",
+    carrierActDetails: "",
+    attachmentsCount: "5",
+
+    transportCostsCertificateDate: "",
+    transportCostsCertificateNumber: "Б/Н",
+    transportCostsCertificateRecipient: "Для надання в митні органи",
+
+    transportCostsCustomerCompany: "",
+    transportCostsVehicle: "",
+
+    transportCostSegments: [
+        {
+            from: "",
+            to: "",
+            distanceKm: "",
+            amount: "",
+        },
+    ],
+
+    cargoInsured: false,
+    loadingWorksIncluded: true,
+
+    forwardingAgreementNumber: "",
+    forwardingAgreementDate: "",
+    forwardingAgreementCity: "",
+    forwardingAgreementValidUntil: "",
 };

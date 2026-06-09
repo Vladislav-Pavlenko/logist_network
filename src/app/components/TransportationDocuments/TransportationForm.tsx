@@ -8,6 +8,9 @@ import { CustomerOrderForm } from "./forms/CustomerOrderForm";
 import { ActForm } from "./forms/ActForm";
 import { InvoiceForm } from "./forms/InvoiceForm";
 import { ForwarderReportForm } from "./forms/ForwarderReportForm";
+import { ForwardingAgreementForm } from "./forms/ForwardingAgreementForm";
+import { CarrierForwardingAgreementForm } from "./forms/CarrierForwardingAgreementForm";
+import { TransportCostsCertificateForm } from "./forms/TransportCostsCertificateForm";
 
 export default function TransportationForm() {
     const [activeDocument, setActiveDocument] = useState<DocumentType | null>(
@@ -64,6 +67,34 @@ export default function TransportationForm() {
                     >
                         Звіт експедитора
                     </button>
+
+                    <button
+                        type="button"
+                        className={styles.documentButton}
+                        onClick={() => setActiveDocument("customerForwardingAgreement")}
+                    >
+                        Договір експедиції з замовником
+                    </button>
+
+                    <button
+                        type="button"
+                        className={styles.documentButton}
+                        onClick={() =>
+                            setActiveDocument("carrierForwardingAgreement")
+                        }
+                    >
+                        Договір експедиції з перевізником
+                    </button>
+
+                    <button
+                        type="button"
+                        className={styles.documentButton}
+                        onClick={() =>
+                            setActiveDocument("transportCostsCertificate")
+                        }
+                    >
+                        Довідка про транспортні витрати
+                    </button>
                 </div>
 
                 {activeDocument === "transportOrderAgreement" && <CarrierOrderForm />}
@@ -71,6 +102,16 @@ export default function TransportationForm() {
                 {activeDocument === "act" && <ActForm />}
                 {activeDocument === "invoice" && <InvoiceForm />}
                 {activeDocument === "forwarderReport" && <ForwarderReportForm />}
+                {activeDocument === "customerForwardingAgreement" && (
+                    <ForwardingAgreementForm />
+                )}
+
+                {activeDocument === "carrierForwardingAgreement" && (
+                    <CarrierForwardingAgreementForm />
+                )}
+                {activeDocument === "transportCostsCertificate" && (
+                    <TransportCostsCertificateForm />
+                )}
             </div>
         </section>
     );

@@ -15,6 +15,12 @@ import {
     parseMoney,
 } from "./money";
 
+import { prepareTransportCostSegments } from "./prepareTransportCostSegments";
+import { formatDocumentDate } from "./formatDocumentDate";
+
+import { formatContractDate } from "./formatContractDate";
+import { formatValidUntilDate } from "./formatValidUntilDate";
+
 export function generateDocxFromTemplate(
     templateName: string,
     data: DocumentData
@@ -103,6 +109,25 @@ export function generateDocxFromTemplate(
         forwarderRewardAmount
     );
 
+    const formattedForwardingAgreementDate = formatContractDate(
+        data.forwardingAgreementDate || ""
+    );
+
+    const formattedForwardingAgreementValidUntil =
+        formatValidUntilDate(
+            data.forwardingAgreementValidUntil || ""
+        );
+
+    const preparedTransportCostSegments =
+        prepareTransportCostSegments(
+            data.transportCostSegments || []
+        );
+
+    const formattedTransportCostsCertificateDate =
+        formatDocumentDate(
+            data.transportCostsCertificateDate || ""
+        );
+
     doc.render({
         ...data,
 
@@ -170,8 +195,60 @@ export function generateDocxFromTemplate(
         forwarderRewardAmount,
         forwarderRewardAmountWords,
 
+        forwardingAgreementNumber:
+            data.forwardingAgreementNumber?.trim() || "",
+
+        forwardingAgreementDate:
+        formattedForwardingAgreementDate.numeric,
+
+        forwardingAgreementDateText:
+        formattedForwardingAgreementDate.text,
+
+        forwardingAgreementCity:
+            data.forwardingAgreementCity?.trim() || "",
+
+        forwardingAgreementValidUntil:
+        formattedForwardingAgreementValidUntil,
+
+        customerRepresentativePosition:
+            data.customerRepresentativePosition?.trim() || "",
+
         services: preparedServices,
         serviceItemsCount,
+
+        transportCostsCertificateNumber:
+            data.transportCostsCertificateNumber?.trim() ||
+            "Б/Н",
+
+        transportCostsCertificateDate:
+        formattedTransportCostsCertificateDate,
+
+        transportCostsCertificateRecipient:
+            data.transportCostsCertificateRecipient?.trim() ||
+            "",
+
+        transportCostsCustomerCompany:
+            data.transportCostsCustomerCompany?.trim() ||
+            data.customerCompany?.trim() ||
+            "",
+
+        transportCostsVehicle:
+            data.transportCostsVehicle?.trim() ||
+            data.vehicleDetails?.trim() ||
+            "",
+
+        transportCostSegments:
+        preparedTransportCostSegments,
+
+        cargoInsuranceText:
+            data.cargoInsured
+                ? "Вантаж був застрахований."
+                : "Вантаж не був застрахований.",
+
+        loadingWorksText:
+            data.loadingWorksIncluded
+                ? "Вантажно-розвантажувальні роботи входять у вартість транспортування."
+                : "Вантажно-розвантажувальні роботи не входять у вартість транспортування.",
 
         priceColumnTitle,
         amountColumnTitle,
