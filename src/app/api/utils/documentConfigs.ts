@@ -29,4 +29,10 @@ export const documentConfigs: Record<DocumentType, DocumentConfig> = {
         outputName: (data) =>
             `Рахунок ${data.customerCompany} ${data.route} ${data.invoiceDate}.docx`,
     },
+
+    forwarderReport: {
+        templateName: "ForwarderReport.docx",
+        outputName: (data) =>
+            `Звіт експедитора ${data.customerCompany} ${data.route} ${data.forwarderReportDate}.docx`,
+    },
 };

@@ -38,6 +38,21 @@ export const initialDraft: DocumentData = {
     otherDetails: "",
     cmrCount: "",
 
+    forwarderReportDate: "",
+    forwarderReportCity: "",
+
+    forwardingAgreementDetails: "",
+
+    actualCarrierCompany: "",
+
+    customerServiceAmount: "",
+    carrierServiceAmount: "",
+    forwarderRewardAmount: "",
+
+    carrierActDetails: "",
+
+    attachmentsCount: "",
+
     services: [
         {
             route: "",

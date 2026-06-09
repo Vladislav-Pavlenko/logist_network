@@ -7,6 +7,7 @@ import { CarrierOrderForm } from "./forms/CarrierOrderForm";
 import { CustomerOrderForm } from "./forms/CustomerOrderForm";
 import { ActForm } from "./forms/ActForm";
 import { InvoiceForm } from "./forms/InvoiceForm";
+import { ForwarderReportForm } from "./forms/ForwarderReportForm";
 
 export default function TransportationForm() {
     const [activeDocument, setActiveDocument] = useState<DocumentType | null>(
@@ -55,12 +56,21 @@ export default function TransportationForm() {
                     >
                         Рахунок
                     </button>
+
+                    <button
+                        type="button"
+                        className={styles.documentButton}
+                        onClick={() => setActiveDocument("forwarderReport")}
+                    >
+                        Звіт експедитора
+                    </button>
                 </div>
 
                 {activeDocument === "transportOrderAgreement" && <CarrierOrderForm />}
                 {activeDocument === "customerOrderAgreement" && <CustomerOrderForm />}
                 {activeDocument === "act" && <ActForm />}
                 {activeDocument === "invoice" && <InvoiceForm />}
+                {activeDocument === "forwarderReport" && <ForwarderReportForm />}
             </div>
         </section>
     );

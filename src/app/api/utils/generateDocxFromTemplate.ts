@@ -8,8 +8,12 @@ import { formatOrderDate } from "./formatOrderDate";
 import { capitalizeText } from "./capitalizeText";
 import { formatBankDetails } from "./formatBankDetails";
 import { prepareServices, calculateTotalAmount } from "./prepareServices";
-import { moneyToWords } from "./money";
 import { formatDateWithYearMarker } from "./formatDateWithYearMarker";
+import {
+    formatMoney,
+    moneyToWords,
+    parseMoney,
+} from "./money";
 
 export function generateDocxFromTemplate(
     templateName: string,
@@ -70,6 +74,35 @@ export function generateDocxFromTemplate(
 
     const totalAmountWords = moneyToWords(totalAmount);
 
+    const customerServiceAmount = formatMoney(
+        data.customerServiceAmount || "0"
+    );
+
+    const carrierServiceAmount = formatMoney(
+        data.carrierServiceAmount || "0"
+    );
+
+    const calculatedForwarderReward =
+        parseMoney(data.customerServiceAmount || "0") -
+        parseMoney(data.carrierServiceAmount || "0");
+
+    const forwarderRewardAmount = formatMoney(
+        data.forwarderRewardAmount ||
+        String(calculatedForwarderReward)
+    );
+
+    const customerServiceAmountWords = moneyToWords(
+        customerServiceAmount
+    );
+
+    const carrierServiceAmountWords = moneyToWords(
+        carrierServiceAmount
+    );
+
+    const forwarderRewardAmountWords = moneyToWords(
+        forwarderRewardAmount
+    );
+
     doc.render({
         ...data,
 
@@ -109,6 +142,33 @@ export function generateDocxFromTemplate(
 
         customerBankDetailsTitle: formattedCustomerBankDetails.bankDetailsTitle,
         customerBankDetailsText: formattedCustomerBankDetails.bankDetailsText,
+
+        forwarderReportDate: formatDateWithYearMarker(
+            data.forwarderReportDate || ""
+        ),
+
+        forwarderReportCity:
+            data.forwarderReportCity?.trim() || "",
+
+        forwardingAgreementDetails:
+            data.forwardingAgreementDetails?.trim() || "",
+
+        actualCarrierCompany:
+            data.actualCarrierCompany?.trim() ||
+            data.carrierCompany?.trim() ||
+            "",
+
+        carrierActDetails:
+            data.carrierActDetails?.trim() || "",
+
+        customerServiceAmount,
+        customerServiceAmountWords,
+
+        carrierServiceAmount,
+        carrierServiceAmountWords,
+
+        forwarderRewardAmount,
+        forwarderRewardAmountWords,
 
         services: preparedServices,
         serviceItemsCount,

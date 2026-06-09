@@ -45,7 +45,26 @@ export function validateGenerateDocumentsRequest(
         return "Додай хоча б одну послугу для акта або рахунку";
     }
 
+    if (
+        selectedDocuments.includes("forwarderReport") &&
+        !data.forwarderReportDate?.trim()
+    ) {
+        return "Не вказано дату складання звіту експедитора";
+    }
 
+    if (
+        selectedDocuments.includes("forwarderReport") &&
+        !data.customerServiceAmount?.trim()
+    ) {
+        return "Не вказано суму, отриману від замовника";
+    }
+
+    if (
+        selectedDocuments.includes("forwarderReport") &&
+        !data.carrierServiceAmount?.trim()
+    ) {
+        return "Не вказано суму, сплачену перевізнику";
+    }
 
     return null;
 }

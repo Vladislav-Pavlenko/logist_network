@@ -2,7 +2,8 @@ export type DocumentType =
     | "transportOrderAgreement"
     | "customerOrderAgreement"
     | "act"
-    | "invoice";
+    | "invoice"
+    |"forwarderReport";
 
 export type VatMode = "withoutVat" | "withVat";
 
@@ -52,6 +53,21 @@ export type DocumentData = {
     deliveryDeadline: string;
     otherDetails: string;
     cmrCount: string;
+
+    forwarderReportDate: string;
+    forwarderReportCity: string;
+
+    forwardingAgreementDetails: string;
+
+    actualCarrierCompany: string;
+
+    customerServiceAmount: string;
+    carrierServiceAmount: string;
+    forwarderRewardAmount: string;
+
+    carrierActDetails: string;
+
+    attachmentsCount: string;
 
     services: ServiceItem[];
 };
