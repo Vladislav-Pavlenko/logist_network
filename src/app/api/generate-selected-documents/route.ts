@@ -3,12 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { documentConfigs } from "@/app/api/utils/documentConfigs";
 import { GenerateDocumentsBody } from "@/app/api/utils/documentTypes";
 import { generateDocxFromTemplate } from "@/app/api/utils/generateDocxFromTemplate";
-import { generateZip } from "@/app/api/utils/generateZip";
 import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
 import { validateGenerateDocumentsRequest } from "@/app/api/utils/validateGenerateDocumentsRequest";
+import { saveGeneratedDocumentsToStorage } from "@/app/api/utils/saveGeneratedDocumentsToStorage";
+import { getCurrentUserFromCookie } from "@/app/lib/auth";
+
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
     try {
+        const currentUser = await getCurrentUserFromCookie();
+
+        if (!currentUser) {
+            return NextResponse.json(
+                { message: "Необхідно увійти в акаунт" },
+                { status: 401 }
+            );
+        }
+
         const body = (await req.json()) as GenerateDocumentsBody;
 
         const validationError = validateGenerateDocumentsRequest(body);
@@ -29,49 +41,44 @@ export async function POST(req: NextRequest) {
                 throw new Error(`Невідомий тип документа: ${documentType}`);
             }
 
-            const buffer = generateDocxFromTemplate(config.templateName, data);
+            const buffer = generateDocxFromTemplate(
+                config.templateName,
+                data
+            );
 
             return {
+                documentType,
                 fileName: sanitizeFileName(config.outputName(data)),
                 buffer,
             };
         });
 
-        if (generatedDocuments.length === 1) {
-            const document = generatedDocuments[0];
+        const storageResult = await saveGeneratedDocumentsToStorage({
+            transportationRecordId: body.transportationRecordId,
+            generatedDocuments,
+            data,
+            currentUser,
+        });
 
-            return new NextResponse(new Uint8Array(document.buffer), {
-                status: 200,
-                headers: {
-                    "Content-Type":
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(
-                        document.fileName
-                    )}`,
-                },
-            });
-        }
-
-        const zipBuffer = await generateZip(generatedDocuments);
-
-        const zipName = sanitizeFileName(
-            `Документи ${data.route} ${data.orderDate || data.actDate}.zip`
-        );
-
-        return new NextResponse(new Uint8Array(zipBuffer), {
-            status: 200,
-            headers: {
-                "Content-Type": "application/zip",
-                "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(
-                    zipName
-                )}`,
-            },
+        return NextResponse.json({
+            message: "Документи згенеровано та збережено",
+            recordId: storageResult.record.id,
+            documents: storageResult.documents.map((document) => ({
+                id: document.id,
+                fileName: document.fileName,
+                documentType: document.documentType,
+            })),
         });
     } catch (error) {
         console.error(error);
 
         return NextResponse.json(
-            { message: "Помилка генерації документів" },
+            {
+                message:
+                    error instanceof Error
+                        ? error.message
+                        : "Помилка генерації документів",
+            },
             { status: 500 }
         );
     }

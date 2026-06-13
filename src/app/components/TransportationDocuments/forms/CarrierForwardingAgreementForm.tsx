@@ -2,23 +2,26 @@
 
 import { Form, Formik, FormikHelpers } from "formik";
 
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
-
 import styles from "../TransportationForm.module.css";
 
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-import {
-    downloadBlob,
-    generateDocument,
-} from "../utils/generateDocument";
+import { generateDocument } from "../utils/generateDocument";
 
 import { TextInput } from "../shared/TextInput";
 import { FormActions } from "../shared/FormActions";
 import { CarrierForwardingAgreementFields } from "../shared/CarrierForwardingAgreementFields";
 
-export function CarrierForwardingAgreementForm() {
+type CarrierForwardingAgreementFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function CarrierForwardingAgreementForm({
+                                                   initialValues: loadedInitialValues,
+                                                   transportationRecordId,
+                                               }: CarrierForwardingAgreementFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
     if (!isLoaded) {
@@ -29,6 +32,7 @@ export function CarrierForwardingAgreementForm() {
         selectedDocuments: ["carrierForwardingAgreement"],
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
     };
 
     async function handleSubmit(
@@ -42,21 +46,13 @@ export function CarrierForwardingAgreementForm() {
 
             saveDraft(data);
 
-            const blob = await generateDocument(
-                "carrierForwardingAgreement",
-                values
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Договір транспортної експедиції з перевізником ${values.carrierCompany} ${values.forwardingAgreementNumber}.docx`
-                )
-            );
-
-            setStatus(
-                "Договір транспортної експедиції з перевізником згенеровано"
-            );
+            setStatus("Договір транспортної експедиції з перевізником згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
 
@@ -73,10 +69,17 @@ export function CarrierForwardingAgreementForm() {
     return (
         <Formik<FormValues>
             initialValues={initialValues}
+            enableReinitialize
             onSubmit={handleSubmit}
         >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="forwardingAgreementNumber"

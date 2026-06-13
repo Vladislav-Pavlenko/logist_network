@@ -1,57 +1,54 @@
 "use client";
 
-import {
-    Field,
-    Form,
-    Formik,
-    FormikHelpers,
-} from "formik";
-
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+import { Field, Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
 
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-
-import {
-    downloadBlob,
-    generateDocument,
-} from "../utils/generateDocument";
+import { generateDocument } from "../utils/generateDocument";
 
 import { TextInput } from "../shared/TextInput";
 import { FormActions } from "../shared/FormActions";
 import { TransportCostSegmentsFields } from "../shared/TransportCostSegmentsFields";
 
-export function TransportCostsCertificateForm() {
-    const { draft, isLoaded, saveDraft } =
-        useTransportationDraft();
+type TransportCostsCertificateFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function TransportCostsCertificateForm({
+                                                  initialValues: loadedInitialValues,
+                                                  transportationRecordId,
+                                              }: TransportCostsCertificateFormProps) {
+    const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
     if (!isLoaded) {
         return null;
     }
 
-    const initialValues: FormValues = {
-        selectedDocuments: ["transportCostsCertificate"],
+    const mergedValues = {
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
+    };
+
+    const initialValues: FormValues = {
+        ...mergedValues,
+        selectedDocuments: ["transportCostsCertificate"],
 
         transportCostsCustomerCompany:
-            draft.transportCostsCustomerCompany ||
-            draft.customerCompany,
+            mergedValues.transportCostsCustomerCompany ||
+            mergedValues.customerCompany,
 
         transportCostsVehicle:
-            draft.transportCostsVehicle ||
-            draft.vehicleDetails,
+            mergedValues.transportCostsVehicle || mergedValues.vehicleDetails,
     };
 
     async function handleSubmit(
         values: FormValues,
-        {
-            setSubmitting,
-            setStatus,
-        }: FormikHelpers<FormValues>
+        { setSubmitting, setStatus }: FormikHelpers<FormValues>
     ) {
         try {
             setStatus("");
@@ -60,28 +57,20 @@ export function TransportCostsCertificateForm() {
 
             saveDraft(data);
 
-            const blob = await generateDocument(
-                "transportCostsCertificate",
-                values
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Довідка про транспортні витрати ${values.transportCostsCustomerCompany} ${values.transportCostsCertificateDate}.docx`
-                )
-            );
-
-            setStatus(
-                "Довідку про транспортні витрати згенеровано"
-            );
+            setStatus("Довідку про транспортні витрати згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
 
             setStatus(
                 error instanceof Error
                     ? error.message
-                    : "Помилка генерації довідки"
+                    : "Помилка генерації довідки про транспортні витрати"
             );
         } finally {
             setSubmitting(false);
@@ -96,6 +85,12 @@ export function TransportCostsCertificateForm() {
         >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="transportCostsCertificateNumber"
@@ -153,8 +148,8 @@ export function TransportCostsCertificateForm() {
                             />
 
                             <span>
-                                Вантажно-розвантажувальні роботи
-                                входять у вартість
+                                Вантажно-розвантажувальні роботи входять у
+                                вартість
                             </span>
                         </label>
                     </div>

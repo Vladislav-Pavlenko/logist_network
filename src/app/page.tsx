@@ -1,7 +1,5 @@
-import TransportationForm from "@/app/components/TransportationDocuments/TransportationForm";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return <main>
-      <TransportationForm/>
-  </main>
+export default function HomePage() {
+    redirect("/documents");
 }

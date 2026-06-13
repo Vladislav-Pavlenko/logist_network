@@ -1,27 +1,40 @@
 "use client";
 
 import { Form, Formik, FormikHelpers } from "formik";
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+
 import styles from "../TransportationForm.module.css";
+
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-import { generateDocument, downloadBlob } from "../utils/generateDocument";
+import { generateDocument } from "../utils/generateDocument";
+
 import { CustomerFields } from "../shared/CustomerFields";
 import { TransportationFields } from "../shared/TransportationFields";
 import { ServicesFields } from "../shared/ServicesFields";
 import { FormActions } from "../shared/FormActions";
-import {TextInput} from "@/app/components/TransportationDocuments/shared/TextInput";
+import { TextInput } from "../shared/TextInput";
 
-export function InvoiceForm() {
+type InvoiceFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function InvoiceForm({
+                                initialValues: loadedInitialValues,
+                                transportationRecordId,
+                            }: InvoiceFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
-    if (!isLoaded) return null;
+    if (!isLoaded) {
+        return null;
+    }
 
     const initialValues: FormValues = {
-        selectedDocuments: ["invoice"],
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
+        selectedDocuments: ["invoice"],
     };
 
     async function handleSubmit(
@@ -32,30 +45,43 @@ export function InvoiceForm() {
             setStatus("");
 
             const { selectedDocuments, ...data } = values;
+
             saveDraft(data);
 
-            const blob = await generateDocument("invoice", values);
-
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Рахунок ${values.customerCompany} ${values.route}.docx`
-                )
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            setStatus("Рахунок згенеровано");
+            setStatus("Рахунок згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
-            setStatus("Помилка генерації рахунку");
+
+            setStatus(
+                error instanceof Error
+                    ? error.message
+                    : "Помилка генерації рахунку"
+            );
         } finally {
             setSubmitting(false);
         }
     }
 
     return (
-        <Formik<FormValues> initialValues={initialValues} onSubmit={handleSubmit}>
+        <Formik<FormValues>
+            initialValues={initialValues}
+            enableReinitialize
+            onSubmit={handleSubmit}
+        >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="invoiceDate"

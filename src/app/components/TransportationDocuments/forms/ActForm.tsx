@@ -1,12 +1,14 @@
 "use client";
 
 import { Form, Formik, FormikHelpers } from "formik";
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+
 import styles from "../TransportationForm.module.css";
+
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-import { generateDocument, downloadBlob } from "../utils/generateDocument";
+import { generateDocument } from "../utils/generateDocument";
+
 import { TextInput } from "../shared/TextInput";
 import { CustomerFields } from "../shared/CustomerFields";
 import { CarrierFields } from "../shared/CarrierFields";
@@ -14,15 +16,26 @@ import { TransportationFields } from "../shared/TransportationFields";
 import { ServicesFields } from "../shared/ServicesFields";
 import { FormActions } from "../shared/FormActions";
 
-export function ActForm() {
+type ActFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function ActForm({
+                            initialValues: loadedInitialValues,
+                            transportationRecordId,
+                        }: ActFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
-    if (!isLoaded) return null;
+    if (!isLoaded) {
+        return null;
+    }
 
     const initialValues: FormValues = {
         selectedDocuments: ["act"],
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
     };
 
     async function handleSubmit(
@@ -33,30 +46,42 @@ export function ActForm() {
             setStatus("");
 
             const { selectedDocuments, ...data } = values;
+
             saveDraft(data);
 
-            const blob = await generateDocument("act", values);
-
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Акт виконаних робіт ${values.customerCompany} ${values.route} ${values.actDate}.docx`
-                )
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            setStatus("Акт згенеровано");
+            setStatus("Акт згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
-            setStatus("Помилка генерації акта");
+            setStatus(
+                error instanceof Error
+                    ? error.message
+                    : "Помилка генерації акта"
+            );
         } finally {
             setSubmitting(false);
         }
     }
 
     return (
-        <Formik<FormValues> initialValues={initialValues} onSubmit={handleSubmit}>
+        <Formik<FormValues>
+            initialValues={initialValues}
+            enableReinitialize
+            onSubmit={handleSubmit}
+        >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="actDate"

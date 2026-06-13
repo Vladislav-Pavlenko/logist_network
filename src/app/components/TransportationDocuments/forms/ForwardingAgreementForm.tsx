@@ -1,23 +1,27 @@
 "use client";
 
 import { Form, Formik, FormikHelpers } from "formik";
+
 import styles from "../TransportationForm.module.css";
 
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-import {
-    downloadBlob,
-    generateDocument,
-} from "../utils/generateDocument";
-
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+import { generateDocument } from "../utils/generateDocument";
 
 import { TextInput } from "../shared/TextInput";
 import { ForwardingAgreementCustomerFields } from "../shared/ForwardingAgreementCustomerFields";
 import { FormActions } from "../shared/FormActions";
 
-export function ForwardingAgreementForm() {
+type ForwardingAgreementFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function ForwardingAgreementForm({
+                                            initialValues: loadedInitialValues,
+                                            transportationRecordId,
+                                        }: ForwardingAgreementFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
     if (!isLoaded) {
@@ -25,9 +29,10 @@ export function ForwardingAgreementForm() {
     }
 
     const initialValues: FormValues = {
-        selectedDocuments: ["customerForwardingAgreement"],
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
+        selectedDocuments: ["customerForwardingAgreement"],
     };
 
     async function handleSubmit(
@@ -41,26 +46,20 @@ export function ForwardingAgreementForm() {
 
             saveDraft(data);
 
-            const blob = await generateDocument(
-                "customerForwardingAgreement",
-                values
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Договір транспортної експедиції ${values.customerCompany} ${values.forwardingAgreementNumber}.docx`
-                )
-            );
-
-            setStatus("Договір транспортної експедиції згенеровано");
+            setStatus("Договір транспортної експедиції з замовником згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
 
             setStatus(
                 error instanceof Error
                     ? error.message
-                    : "Помилка генерації договору"
+                    : "Помилка генерації договору з замовником"
             );
         } finally {
             setSubmitting(false);
@@ -70,10 +69,17 @@ export function ForwardingAgreementForm() {
     return (
         <Formik<FormValues>
             initialValues={initialValues}
+            enableReinitialize
             onSubmit={handleSubmit}
         >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="forwardingAgreementNumber"

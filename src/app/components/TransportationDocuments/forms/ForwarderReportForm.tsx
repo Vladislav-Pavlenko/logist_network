@@ -1,27 +1,38 @@
 "use client";
 
 import { Form, Formik, FormikHelpers } from "formik";
+
 import styles from "../TransportationForm.module.css";
 
 import { FormValues } from "../types";
 import { initialDraft } from "../initialDraft";
 import { useTransportationDraft } from "../hooks/useTransportationDraft";
-import { generateDocument, downloadBlob } from "../utils/generateDocument";
-import { sanitizeFileName } from "@/app/api/utils/sanitizeFileName";
+import { generateDocument } from "../utils/generateDocument";
 
 import { TextInput } from "../shared/TextInput";
 import { TextArea } from "../shared/TextArea";
 import { FormActions } from "../shared/FormActions";
 
-export function ForwarderReportForm() {
+type ForwarderReportFormProps = {
+    initialValues?: Partial<FormValues>;
+    transportationRecordId?: string;
+};
+
+export function ForwarderReportForm({
+                                        initialValues: loadedInitialValues,
+                                        transportationRecordId,
+                                    }: ForwarderReportFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
-    if (!isLoaded) return null;
+    if (!isLoaded) {
+        return null;
+    }
 
     const initialValues: FormValues = {
-        selectedDocuments: ["forwarderReport"],
         ...initialDraft,
         ...draft,
+        ...loadedInitialValues,
+        selectedDocuments: ["forwarderReport"],
     };
 
     async function handleSubmit(
@@ -35,16 +46,13 @@ export function ForwarderReportForm() {
 
             saveDraft(data);
 
-            const blob = await generateDocument("forwarderReport", values);
-
-            downloadBlob(
-                blob,
-                sanitizeFileName(
-                    `Звіт експедитора ${values.customerCompany} ${values.route} ${values.forwarderReportDate}.docx`
-                )
+            await generateDocument(
+                selectedDocuments,
+                data,
+                transportationRecordId
             );
 
-            setStatus("Звіт експедитора згенеровано");
+            setStatus("Звіт експедитора згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
 
@@ -61,10 +69,17 @@ export function ForwarderReportForm() {
     return (
         <Formik<FormValues>
             initialValues={initialValues}
+            enableReinitialize
             onSubmit={handleSubmit}
         >
             {({ isSubmitting, status }) => (
                 <Form className={styles.form}>
+                    {transportationRecordId && (
+                        <p className={styles.formNotice}>
+                            Документ буде збережено в поточну папку перевезення.
+                        </p>
+                    )}
+
                     <div className={styles.grid}>
                         <TextInput
                             name="forwarderReportDate"

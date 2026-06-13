@@ -113,4 +113,5 @@ export type DocumentData = {
 export type GenerateDocumentsBody = {
     selectedDocuments: DocumentType[];
     data: DocumentData;
+    transportationRecordId?: string;
 };

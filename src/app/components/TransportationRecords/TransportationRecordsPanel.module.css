@@ -1,0 +1,334 @@
+.section {
+    width: 100%;
+    max-width: 1180px;
+    margin: 24px auto 0;
+    padding: 0 20px 40px;
+
+    color: #111827;
+    color-scheme: light;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: flex-start;
+
+    margin-bottom: 18px;
+}
+
+.title {
+    margin: 0 0 6px;
+
+    font-size: 24px;
+    font-weight: 800;
+
+    color: #111827;
+}
+
+.subtitle {
+    margin: 0;
+
+    font-size: 14px;
+    line-height: 1.5;
+
+    color: #4b5563;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    gap: 12px;
+    align-items: end;
+
+    margin-bottom: 18px;
+    padding: 16px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    background: #f9fafb;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #374151;
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 11px 12px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    color: #111827;
+    background: #ffffff;
+
+    outline: none;
+}
+
+.input::placeholder {
+    color: #9ca3af;
+}
+
+.select option {
+    color: #111827;
+    background: #ffffff;
+}
+
+.input:focus,
+.select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.refreshButton,
+.searchButton {
+    padding: 11px 16px;
+
+    border: none;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #ffffff;
+    background: #2563eb;
+
+    cursor: pointer;
+
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.refreshButton:hover,
+.searchButton:hover {
+    transform: translateY(-1px);
+}
+
+.refreshButton:disabled,
+.searchButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.folderCard {
+    display: flex;
+    gap: 14px;
+
+    padding: 16px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    color: #111827;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+.folderIcon {
+    font-size: 34px;
+    line-height: 1;
+}
+
+.folderContent {
+    min-width: 0;
+}
+
+.folderTitle {
+    margin: 0 0 8px;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    color: #111827;
+}
+
+.folderMeta,
+.folderDate {
+    margin: 0 0 4px;
+
+    font-size: 13px;
+    line-height: 1.4;
+
+    color: #4b5563;
+}
+
+.error {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    color: #991b1b;
+    background: #fee2e2;
+}
+
+.empty {
+    padding: 20px;
+
+    border: 1px dashed #d1d5db;
+    border-radius: 14px;
+
+    font-size: 14px;
+    color: #4b5563;
+    text-align: center;
+
+    background: #ffffff;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .controls {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 620px) {
+    .header {
+        flex-direction: column;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.recordsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+.openLink {
+    display: inline-flex;
+    width: fit-content;
+
+    padding: 8px 10px;
+
+    border-radius: 9px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #2563eb;
+    background: #eff6ff;
+
+    text-decoration: none;
+}
+
+.openLink:hover {
+    background: #dbeafe;
+}
+
+.createBox {
+    margin-bottom: 18px;
+    padding: 16px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    background: #f9fafb;
+}
+
+.createTitle {
+    margin: 0 0 14px;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    color: #111827;
+}
+
+.createGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.createButton {
+    padding: 11px 16px;
+
+    border: none;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #ffffff;
+    background: #16a34a;
+
+    cursor: pointer;
+}
+
+.createButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .createGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.recordActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.deleteFolderButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px 10px;
+
+    border: none;
+    border-radius: 9px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #ffffff;
+    background: #dc2626;
+
+    cursor: pointer;
+
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.deleteFolderButton:hover {
+    background: #b91c1c;
+}
+
+.deleteFolderButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

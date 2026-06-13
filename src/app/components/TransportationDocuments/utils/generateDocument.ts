@@ -1,24 +1,27 @@
 import axios from "axios";
-import { DocumentType, FormValues } from "../types";
+
+import { DocumentData, DocumentType } from "../types";
 
 export async function generateDocument(
-    documentType: DocumentType,
-    values: FormValues
-): Promise<Blob> {
-    const { selectedDocuments, ...data } = values;
+    selectedDocuments: DocumentType | DocumentType[],
+    data: DocumentData,
+    transportationRecordId?: string
+): Promise<void> {
+    const normalizedSelectedDocuments = Array.isArray(selectedDocuments)
+        ? selectedDocuments
+        : [selectedDocuments];
 
-    const response = await axios.post<Blob>(
+    await axios.post(
         "/api/generate-selected-documents",
         {
-            selectedDocuments: [documentType],
+            selectedDocuments: normalizedSelectedDocuments,
             data,
+            transportationRecordId,
         },
         {
             responseType: "blob",
         }
     );
-
-    return response.data;
 }
 
 export function downloadBlob(blob: Blob, fileName: string) {
@@ -30,7 +33,7 @@ export function downloadBlob(blob: Blob, fileName: string) {
 
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
 
     URL.revokeObjectURL(url);
 }

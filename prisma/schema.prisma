@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(LOGISTICIAN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdRegistrationCodes RegistrationCode[] @relation("RegistrationCodeCreatedBy")
+  usedRegistrationCodes    RegistrationCode[] @relation("RegistrationCodeUsedBy")
+
+  transportationRecords   TransportationRecord[]   @relation("TransportationRecordCreatedBy")
+  transportationDocuments TransportationDocument[] @relation("TransportationDocumentCreatedBy")
+  sharedDocumentLinks     SharedDocumentLink[]     @relation("SharedDocumentLinkCreatedBy")
+}
+
+model RegistrationCode {
+  id String @id @default(cuid())
+
+  codeHash    String @unique
+  codePreview String
+
+  isUsed Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  usedAt DateTime?
+
+  createdById String?
+  usedById    String?
+
+  createdBy User? @relation("RegistrationCodeCreatedBy", fields: [createdById], references: [id])
+  usedBy    User? @relation("RegistrationCodeUsedBy", fields: [usedById], references: [id])
+}
+
+model TransportationRecord {
+  id String @id @default(cuid())
+
+  title String?
+
+  route           String?
+  customerCompany String?
+  carrierCompany  String?
+  vehicleDetails  String?
+  cargoDetails    String?
+
+  formData Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation("TransportationRecordCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  documents TransportationDocument[]
+
+  @@index([createdById])
+  @@index([route])
+  @@index([customerCompany])
+  @@index([carrierCompany])
+  @@index([updatedAt])
+}
+
+model TransportationDocument {
+  id String @id @default(cuid())
+
+  fileName         String
+  originalFileName String?
+  mimeType         String
+  size             Int
+  extension        String?
+
+  storageKey String @unique
+
+  documentType String
+  source       DocumentSource @default(GENERATED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transportationRecordId String
+  transportationRecord   TransportationRecord @relation(fields: [transportationRecordId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("TransportationDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  sharedLinks SharedDocumentLink[]
+
+  @@index([transportationRecordId])
+  @@index([createdById])
+  @@index([documentType])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model SharedDocumentLink {
+  id String @id @default(cuid())
+
+  tokenHash String @unique
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  downloadCount Int  @default(0)
+  maxDownloads  Int?
+
+  isActive Boolean @default(true)
+
+  documentId String
+  document   TransportationDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("SharedDocumentLinkCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([createdById])
+  @@index([isActive])
+}
+
+enum DocumentSource {
+  GENERATED
+  UPLOADED
+  SCANNED
+}
+
+enum Role {
+  ADMIN
+  LOGISTICIAN
+}
