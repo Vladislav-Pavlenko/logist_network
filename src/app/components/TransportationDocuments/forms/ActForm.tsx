@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -27,6 +28,10 @@ export function ActForm({
                         }: ActFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
+
     if (!isLoaded) {
         return null;
     }
@@ -44,20 +49,24 @@ export function ActForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
 
+            setGeneratedRecordId(result.recordId);
+
             setStatus("Акт згенеровано та збережено в папку");
         } catch (error) {
             console.error(error);
+
             setStatus(
                 error instanceof Error
                     ? error.message
@@ -105,6 +114,7 @@ export function ActForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати акт"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}

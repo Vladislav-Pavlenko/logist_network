@@ -2,26 +2,35 @@ import axios from "axios";
 
 import { DocumentData, DocumentType } from "../types";
 
+type GenerateDocumentResponse = {
+    message: string;
+    recordId: string;
+    documents: {
+        id: string;
+        fileName: string;
+        documentType: string;
+    }[];
+};
+
 export async function generateDocument(
     selectedDocuments: DocumentType | DocumentType[],
     data: DocumentData,
     transportationRecordId?: string
-): Promise<void> {
+): Promise<GenerateDocumentResponse> {
     const normalizedSelectedDocuments = Array.isArray(selectedDocuments)
         ? selectedDocuments
         : [selectedDocuments];
 
-    await axios.post(
+    const response = await axios.post<GenerateDocumentResponse>(
         "/api/generate-selected-documents",
         {
             selectedDocuments: normalizedSelectedDocuments,
             data,
             transportationRecordId,
-        },
-        {
-            responseType: "blob",
         }
     );
+
+    return response.data;
 }
 
 export function downloadBlob(blob: Blob, fileName: string) {

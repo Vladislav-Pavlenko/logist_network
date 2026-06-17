@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -25,6 +26,10 @@ export function CarrierOrderForm({
                                  }: CarrierOrderFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
+
     if (!isLoaded) {
         return null;
     }
@@ -42,16 +47,19 @@ export function CarrierOrderForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
+
+            setGeneratedRecordId(result.recordId);
 
             setStatus("Заявку з перевізником згенеровано та збережено в папку");
         } catch (error) {
@@ -96,6 +104,7 @@ export function CarrierOrderForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати заявку з перевізником"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}

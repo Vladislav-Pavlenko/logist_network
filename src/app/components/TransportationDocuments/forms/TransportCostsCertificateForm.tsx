@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Field, Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -19,10 +20,14 @@ type TransportCostsCertificateFormProps = {
 };
 
 export function TransportCostsCertificateForm({
-                                                  initialValues: loadedInitialValues,
-                                                  transportationRecordId,
-                                              }: TransportCostsCertificateFormProps) {
+    initialValues: loadedInitialValues,
+    transportationRecordId,
+}: TransportCostsCertificateFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
+
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
 
     if (!isLoaded) {
         return null;
@@ -52,18 +57,23 @@ export function TransportCostsCertificateForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
 
-            setStatus("Довідку про транспортні витрати згенеровано та збережено в папку");
+            setGeneratedRecordId(result.recordId);
+
+            setStatus(
+                "Довідку про транспортні витрати згенеровано та збережено в папку"
+            );
         } catch (error) {
             console.error(error);
 
@@ -158,6 +168,7 @@ export function TransportCostsCertificateForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати довідку"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}

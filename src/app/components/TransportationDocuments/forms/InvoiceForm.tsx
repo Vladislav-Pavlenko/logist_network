@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -21,10 +22,14 @@ type InvoiceFormProps = {
 };
 
 export function InvoiceForm({
-                                initialValues: loadedInitialValues,
-                                transportationRecordId,
-                            }: InvoiceFormProps) {
+    initialValues: loadedInitialValues,
+    transportationRecordId,
+}: InvoiceFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
+
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
 
     if (!isLoaded) {
         return null;
@@ -43,16 +48,19 @@ export function InvoiceForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
+
+            setGeneratedRecordId(result.recordId);
 
             setStatus("Рахунок згенеровано та збережено в папку");
         } catch (error) {
@@ -104,9 +112,11 @@ export function InvoiceForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати рахунок"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}
         </Formik>
     );
 }
+

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -24,6 +25,10 @@ export function ForwarderReportForm({
                                     }: ForwarderReportFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
+
     if (!isLoaded) {
         return null;
     }
@@ -41,16 +46,19 @@ export function ForwarderReportForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
+
+            setGeneratedRecordId(result.recordId);
 
             setStatus("Звіт експедитора згенеровано та збережено в папку");
         } catch (error) {
@@ -158,6 +166,7 @@ export function ForwarderReportForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати звіт експедитора"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}

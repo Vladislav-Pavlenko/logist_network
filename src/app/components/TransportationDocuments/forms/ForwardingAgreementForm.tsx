@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
 
 import styles from "../TransportationForm.module.css";
@@ -24,6 +25,10 @@ export function ForwardingAgreementForm({
                                         }: ForwardingAgreementFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
+    const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
+        null
+    );
+
     if (!isLoaded) {
         return null;
     }
@@ -41,18 +46,23 @@ export function ForwardingAgreementForm({
     ) {
         try {
             setStatus("");
+            setGeneratedRecordId(null);
 
             const { selectedDocuments, ...data } = values;
 
             saveDraft(data);
 
-            await generateDocument(
+            const result = await generateDocument(
                 selectedDocuments,
                 data,
                 transportationRecordId
             );
 
-            setStatus("Договір транспортної експедиції з замовником згенеровано та збережено в папку");
+            setGeneratedRecordId(result.recordId);
+
+            setStatus(
+                "Договір транспортної експедиції з замовником згенеровано та збережено в папку"
+            );
         } catch (error) {
             console.error(error);
 
@@ -112,6 +122,7 @@ export function ForwardingAgreementForm({
                         isSubmitting={isSubmitting}
                         status={status}
                         buttonText="Згенерувати договір з замовником"
+                        folderRecordId={generatedRecordId}
                     />
                 </Form>
             )}
