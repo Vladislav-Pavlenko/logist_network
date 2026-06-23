@@ -108,7 +108,7 @@ export default function AuthHeader() {
                             href="/admin/registration-codes"
                             className={styles.link}
                         >
-                            Коди реєстрації
+                            Кабінет адміністратора
                         </Link>
                     )}
                 </nav>

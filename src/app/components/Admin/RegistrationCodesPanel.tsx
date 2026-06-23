@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 
 import styles from "./RegistrationCodesPanel.module.css";
+import {AdminChangePassword} from "@/app/components/Admin/AdminChangePassword";
 
 type RegistrationCodeItem = {
     id: string;
@@ -349,7 +350,11 @@ export default function RegistrationCodesPanel() {
                         </div>
                     )}
                 </section>
+
+                <AdminChangePassword/>
             </section>
+
+
         </main>
     );
 }
