@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -20,11 +21,13 @@ import { FormActions } from "../shared/FormActions";
 type ActFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function ActForm({
                             initialValues: loadedInitialValues,
                             transportationRecordId,
+                            currentUserId,
                         }: ActFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
@@ -62,6 +65,11 @@ export function ActForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'act',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus("Акт згенеровано та збережено в папку");
         } catch (error) {

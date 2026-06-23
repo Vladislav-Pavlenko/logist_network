@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Field, Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -17,12 +18,14 @@ import { TransportCostSegmentsFields } from "../shared/TransportCostSegmentsFiel
 type TransportCostsCertificateFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function TransportCostsCertificateForm({
-    initialValues: loadedInitialValues,
-    transportationRecordId,
-}: TransportCostsCertificateFormProps) {
+                                                  initialValues: loadedInitialValues,
+                                                  transportationRecordId,
+                                                  currentUserId,
+                                              }: TransportCostsCertificateFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
     const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
@@ -70,6 +73,11 @@ export function TransportCostsCertificateForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'transportCostsCertificate',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus(
                 "Довідку про транспортні витрати згенеровано та збережено в папку"

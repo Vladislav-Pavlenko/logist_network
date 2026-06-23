@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -17,11 +18,13 @@ import { FormActions } from "../shared/FormActions";
 type ForwardingAgreementFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function ForwardingAgreementForm({
                                             initialValues: loadedInitialValues,
                                             transportationRecordId,
+                                            currentUserId,
                                         }: ForwardingAgreementFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
@@ -59,6 +62,11 @@ export function ForwardingAgreementForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'customerForwardingAgreement',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus(
                 "Договір транспортної експедиції з замовником згенеровано та збережено в папку"

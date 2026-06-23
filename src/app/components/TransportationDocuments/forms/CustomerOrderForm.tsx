@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -18,11 +19,13 @@ import { FormActions } from "../shared/FormActions";
 type CustomerOrderFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function CustomerOrderForm({
                                       initialValues: loadedInitialValues,
                                       transportationRecordId,
+                                      currentUserId,
                                   }: CustomerOrderFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
@@ -60,6 +63,11 @@ export function CustomerOrderForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'customerOrderAgreement',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus("Заявку із замовником згенеровано та збережено в папку");
         } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -18,11 +19,13 @@ import { FormActions } from "../shared/FormActions";
 type CarrierOrderFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function CarrierOrderForm({
                                      initialValues: loadedInitialValues,
                                      transportationRecordId,
+                                     currentUserId,
                                  }: CarrierOrderFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
@@ -60,6 +63,11 @@ export function CarrierOrderForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'transportOrderAgreement',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus("Заявку з перевізником згенеровано та збережено в папку");
         } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -19,12 +20,14 @@ import { TextInput } from "../shared/TextInput";
 type InvoiceFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function InvoiceForm({
-    initialValues: loadedInitialValues,
-    transportationRecordId,
-}: InvoiceFormProps) {
+                                initialValues: loadedInitialValues,
+                                transportationRecordId,
+                                currentUserId,
+                            }: InvoiceFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
     const [generatedRecordId, setGeneratedRecordId] = useState<string | null>(
@@ -61,6 +64,11 @@ export function InvoiceForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'invoice',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus("Рахунок згенеровано та збережено в папку");
         } catch (error) {
@@ -119,4 +127,3 @@ export function InvoiceForm({
         </Formik>
     );
 }
-

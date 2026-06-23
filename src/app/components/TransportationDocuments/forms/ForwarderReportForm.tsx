@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Form, Formik, FormikHelpers } from "formik";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "../TransportationForm.module.css";
 
@@ -17,11 +18,13 @@ import { FormActions } from "../shared/FormActions";
 type ForwarderReportFormProps = {
     initialValues?: Partial<FormValues>;
     transportationRecordId?: string;
+    currentUserId?: string;
 };
 
 export function ForwarderReportForm({
                                         initialValues: loadedInitialValues,
                                         transportationRecordId,
+                                        currentUserId,
                                     }: ForwarderReportFormProps) {
     const { draft, isLoaded, saveDraft } = useTransportationDraft();
 
@@ -59,6 +62,11 @@ export function ForwarderReportForm({
             );
 
             setGeneratedRecordId(result.recordId);
+
+            sendGAEvent('event', 'generate_document_success', {
+                document_type: 'forwarderReport',
+                logist_id: currentUserId || 'unauthorized_user'
+            });
 
             setStatus("Звіт експедитора згенеровано та збережено в папку");
         } catch (error) {

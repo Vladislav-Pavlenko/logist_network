@@ -4,6 +4,7 @@ import AuthHeader from "@/app/components/Auth/AuthHeader";
 import TransportationForm from "@/app/components/TransportationDocuments/TransportationForm";
 
 export default function DocumentsPage() {
+
     return (
         <>
             <AuthHeader />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { sendGAEvent } from '@next/third-parties/google';
 
 import styles from "./TransportationForm.module.css";
 
@@ -25,30 +26,54 @@ type TransportationRecordResponse = {
     message?: string;
 };
 
+type User = {
+    id: string;
+    name: string;
+    email: string;
+    role: "ADMIN" | "LOGISTICIAN";
+};
+
 export default function TransportationForm() {
     const searchParams = useSearchParams();
     const transportationRecordId = searchParams.get("recordId");
 
-    const [activeDocument, setActiveDocument] = useState<DocumentType | null>(
-        null
-    );
-
-    const [initialValues, setInitialValues] =
-        useState<DocumentData>(initialDraft);
+    const [activeDocument, setActiveDocument] = useState<DocumentType | null>(null);
+    const [initialValues, setInitialValues] = useState<DocumentData>(initialDraft);
 
     const [loadedRecordId, setLoadedRecordId] = useState<string | null>(null);
-    const [isLoadingRecord, setIsLoadingRecord] = useState(
-        Boolean(transportationRecordId)
-    );
+    const [isLoadingRecord, setIsLoadingRecord] = useState(Boolean(transportationRecordId));
     const [recordLoadError, setRecordLoadError] = useState("");
 
-    const currentRecordId =
-        loadedRecordId || transportationRecordId || undefined;
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+    const currentRecordId = loadedRecordId || transportationRecordId || undefined;
 
     useEffect(() => {
-        if (!transportationRecordId) {
-            return;
+        let isMounted = true;
+
+        async function loadUser() {
+            try {
+                const response = await fetch("/api/auth/me");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (isMounted && data.user) {
+                        setCurrentUser(data.user);
+                    }
+                }
+            } catch (error) {
+                console.error("Помилка завантаження юзера:", error);
+            }
         }
+
+        loadUser();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!transportationRecordId) return;
 
         const controller = new AbortController();
 
@@ -58,27 +83,18 @@ export default function TransportationForm() {
 
                 const response = await fetch(
                     `/api/transportations/${transportationRecordId}`,
-                    {
-                        signal: controller.signal,
-                    }
+                    { signal: controller.signal }
                 );
 
-                const data =
-                    (await response.json()) as TransportationRecordResponse;
+                const data = (await response.json()) as TransportationRecordResponse;
 
                 if (!response.ok || !data.record) {
-                    throw new Error(
-                        data.message || "Помилка завантаження даних"
-                    );
+                    throw new Error(data.message || "Помилка завантаження даних");
                 }
 
                 const formData = data.record.formData;
 
-                if (
-                    formData &&
-                    typeof formData === "object" &&
-                    !Array.isArray(formData)
-                ) {
+                if (formData && typeof formData === "object" && !Array.isArray(formData)) {
                     setInitialValues({
                         ...initialDraft,
                         ...(formData as Partial<DocumentData>),
@@ -87,18 +103,8 @@ export default function TransportationForm() {
 
                 setLoadedRecordId(data.record.id);
             } catch (error) {
-                if (
-                    error instanceof DOMException &&
-                    error.name === "AbortError"
-                ) {
-                    return;
-                }
-
-                setRecordLoadError(
-                    error instanceof Error
-                        ? error.message
-                        : "Помилка завантаження даних"
-                );
+                if (error instanceof DOMException && error.name === "AbortError") return;
+                setRecordLoadError(error instanceof Error ? error.message : "Помилка завантаження даних");
             } finally {
                 setIsLoadingRecord(false);
             }
@@ -114,6 +120,18 @@ export default function TransportationForm() {
     const formProps = {
         initialValues,
         transportationRecordId: currentRecordId,
+        currentUserId: currentUser?.id,
+    };
+
+    const handleDocumentSelect = (docType: DocumentType) => {
+        setActiveDocument(docType);
+
+        const userId = currentUser ? currentUser.id : 'unauthorized_user';
+
+        sendGAEvent('event', 'select_document_form', {
+            document_type: docType,
+            logist_id: userId
+        });
     };
 
     return (
@@ -123,20 +141,16 @@ export default function TransportationForm() {
                     <h1 className={styles.title}>Документація</h1>
 
                     <p className={styles.subtitle}>
-                        Вибери документ, заповни потрібні дані та сформуй
-                        Word-файл.
+                        Вибери документ, заповни потрібні дані та сформуй Word-файл.
                     </p>
 
                     {isLoadingRecord && (
-                        <p className={styles.subtitle}>
-                            Завантаження даних з папки...
-                        </p>
+                        <p className={styles.subtitle}>Завантаження даних з папки...</p>
                     )}
 
                     {currentRecordId && !isLoadingRecord && (
                         <p className={styles.subtitle}>
-                            Дані відкрито з папки перевезення. Нові документи
-                            будуть збережені в цю ж папку.
+                            Дані відкрито з папки перевезення. Нові документи будуть збережені в цю ж папку.
                         </p>
                     )}
 
@@ -149,9 +163,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() =>
-                            setActiveDocument("transportOrderAgreement")
-                        }
+                        onClick={() => handleDocumentSelect("transportOrderAgreement")}
                     >
                         Заявка з перевізником
                     </button>
@@ -159,9 +171,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() =>
-                            setActiveDocument("customerOrderAgreement")
-                        }
+                        onClick={() => handleDocumentSelect("customerOrderAgreement")}
                     >
                         Заявка із замовником
                     </button>
@@ -169,7 +179,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() => setActiveDocument("act")}
+                        onClick={() => handleDocumentSelect("act")}
                     >
                         Акт
                     </button>
@@ -177,7 +187,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() => setActiveDocument("invoice")}
+                        onClick={() => handleDocumentSelect("invoice")}
                     >
                         Рахунок
                     </button>
@@ -185,7 +195,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() => setActiveDocument("forwarderReport")}
+                        onClick={() => handleDocumentSelect("forwarderReport")}
                     >
                         Звіт експедитора
                     </button>
@@ -193,9 +203,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() =>
-                            setActiveDocument("customerForwardingAgreement")
-                        }
+                        onClick={() => handleDocumentSelect("customerForwardingAgreement")}
                     >
                         Договір експедиції з замовником
                     </button>
@@ -203,9 +211,7 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() =>
-                            setActiveDocument("carrierForwardingAgreement")
-                        }
+                        onClick={() => handleDocumentSelect("carrierForwardingAgreement")}
                     >
                         Договір експедиції з перевізником
                     </button>
@@ -213,43 +219,20 @@ export default function TransportationForm() {
                     <button
                         type="button"
                         className={styles.documentButton}
-                        onClick={() =>
-                            setActiveDocument("transportCostsCertificate")
-                        }
+                        onClick={() => handleDocumentSelect("transportCostsCertificate")}
                     >
                         Довідка про транспортні витрати
                     </button>
                 </div>
 
-                {activeDocument === "transportOrderAgreement" && (
-                    <CarrierOrderForm {...formProps} />
-                )}
-
-                {activeDocument === "customerOrderAgreement" && (
-                    <CustomerOrderForm {...formProps} />
-                )}
-
+                {activeDocument === "transportOrderAgreement" && <CarrierOrderForm {...formProps} />}
+                {activeDocument === "customerOrderAgreement" && <CustomerOrderForm {...formProps} />}
                 {activeDocument === "act" && <ActForm {...formProps} />}
-
-                {activeDocument === "invoice" && (
-                    <InvoiceForm {...formProps} />
-                )}
-
-                {activeDocument === "forwarderReport" && (
-                    <ForwarderReportForm {...formProps} />
-                )}
-
-                {activeDocument === "customerForwardingAgreement" && (
-                    <ForwardingAgreementForm {...formProps} />
-                )}
-
-                {activeDocument === "carrierForwardingAgreement" && (
-                    <CarrierForwardingAgreementForm {...formProps} />
-                )}
-
-                {activeDocument === "transportCostsCertificate" && (
-                    <TransportCostsCertificateForm {...formProps} />
-                )}
+                {activeDocument === "invoice" && <InvoiceForm {...formProps} />}
+                {activeDocument === "forwarderReport" && <ForwarderReportForm {...formProps} />}
+                {activeDocument === "customerForwardingAgreement" && <ForwardingAgreementForm {...formProps} />}
+                {activeDocument === "carrierForwardingAgreement" && <CarrierForwardingAgreementForm {...formProps} />}
+                {activeDocument === "transportCostsCertificate" && <TransportCostsCertificateForm {...formProps} />}
             </div>
         </section>
     );

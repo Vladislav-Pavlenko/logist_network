@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import './reset.css';
 import "./globals.css";
+import { GoogleAnalytics } from '@next/third-parties/google';
+import {ErrorTracker} from "@/app/components/ErrorTracker";
 
 export const metadata: Metadata = {
   title: "Logist network",
@@ -14,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" >
-      <body>{children}</body>
+      <body>
+      <ErrorTracker />
+      {children}
+      </body>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID as string} />
     </html>
   );
 }
