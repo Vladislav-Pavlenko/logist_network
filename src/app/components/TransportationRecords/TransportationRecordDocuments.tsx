@@ -108,6 +108,8 @@ export default function TransportationRecordDocuments() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
 
+    const [documentSearch, setDocumentSearch] = useState("");
+
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [isSavingRecord, setIsSavingRecord] = useState(false);
@@ -118,6 +120,21 @@ export default function TransportationRecordDocuments() {
     );
 
     const [error, setError] = useState("");
+    const normalizedDocumentSearch = documentSearch.trim().toLowerCase();
+
+    const filteredDocuments = documents.filter((document) => {
+        if (!normalizedDocumentSearch) {
+            return true;
+        }
+
+        return document.fileName.toLowerCase().includes(normalizedDocumentSearch);
+    });
+
+    const filteredDocumentIds = filteredDocuments.map((document) => document.id);
+
+    const areAllFilteredDocumentsSelected =
+        filteredDocumentIds.length > 0 &&
+        filteredDocumentIds.every((id) => selectedDocumentIds.includes(id));
 
     useEffect(() => {
         if (!recordId) {
@@ -363,12 +380,18 @@ export default function TransportationRecordDocuments() {
     }
 
     function toggleSelectAll() {
-        if (selectedDocumentIds.length === documents.length) {
-            setSelectedDocumentIds([]);
+        if (areAllFilteredDocumentsSelected) {
+            setSelectedDocumentIds((currentIds) =>
+                currentIds.filter((id) => !filteredDocumentIds.includes(id))
+            );
+
             return;
         }
 
-        setSelectedDocumentIds(documents.map((document) => document.id));
+        setSelectedDocumentIds((currentIds) => [
+            ...currentIds,
+            ...filteredDocumentIds.filter((id) => !currentIds.includes(id)),
+        ]);
     }
 
     async function downloadSelectedAsZip() {
@@ -559,6 +582,22 @@ export default function TransportationRecordDocuments() {
 
             {error && <p className={styles.error}>{error}</p>}
 
+            <div className={styles.documentSearchBox}>
+                <input
+                    type="search"
+                    value={documentSearch}
+                    onChange={(event) => setDocumentSearch(event.target.value)}
+                    className={styles.documentSearchInput}
+                    placeholder="Пошук файлу в папці..."
+                />
+
+                {documentSearch && (
+                    <span className={styles.documentSearchResult}>
+            Знайдено: {filteredDocuments.length}
+        </span>
+                )}
+            </div>
+
             <div className={styles.actions}>
                 <button
                     type="button"
@@ -587,9 +626,11 @@ export default function TransportationRecordDocuments() {
                 <p className={styles.empty}>Завантаження...</p>
             ) : documents.length === 0 ? (
                 <p className={styles.empty}>У цій папці ще немає файлів</p>
+            ) : filteredDocuments.length === 0 ? (
+                <p className={styles.empty}>Файлів за таким пошуком не знайдено</p>
             ) : (
                 <div className={styles.list}>
-                    {documents.map((document) => (
+                    {filteredDocuments.map((document) => (
                         <article key={document.id} className={styles.card}>
                             <input
                                 className={styles.checkbox}
